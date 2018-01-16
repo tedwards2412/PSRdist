@@ -149,5 +149,7 @@ void dora(double l, double b, double d, double *ne9, struct Dora t10);
 void smc(double xx, double yy, double zz, int *w_smc, double *ne10, struct SMC t11);
 void frb_d(double DDM, double DM_Gal, double DM_MC, double DM_Host, int uu, int vbs, char* text);
 double tsc(double dm);
-void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text);
+// RTB: dmdtau returns dist as double
+// void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text);
+double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text);
 double ne_crd(double *x, double *y, double *z, double *gl, double *gb, double *dd, int ncrd, int vbs, char *dirname, char *text);

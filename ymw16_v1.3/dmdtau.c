@@ -28,7 +28,7 @@ Jumei Yao (yaojumei@xao.ac.cn), Richard N Manchester
 double tsc(double dm){
   return 4.1e-11*pow(dm, 2.2)*(1+0.00194*dm*dm);
 }
-void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text)
+double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np, int vbs, char *dirname, char *text)
 {
   double ne0=0;
   double ne=0;
@@ -401,4 +401,5 @@ void dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int np
       }
     }    
   }
+  return dist ; // RTB: return dist as a double
 }
