@@ -1,3 +1,5 @@
+# Parameters from ymw16, Table 2 
+# Not included in this table: na1-5, so only 30 free parameters)
 Ad         2500  2500  2500  0
 Bd         15000  15000  15000  0
 n1         0.008  0.016  0.01132  0.00043
@@ -44,7 +46,7 @@ n30D       0.05  0.5  0.32  0.17
 nsmc       0  0.3  0.045  0.017 
 # --- Other options --- # 
 z_Sun      6 6 6 0
-Ele_arm    0.135000 0.129000 0.103000 0.116000 0.005700
-Wid_arm    300 500 300 500 300 
+# Ele_arm    0.135000 0.129000 0.103000 0.116000 0.005700
+# Wid_arm    300 500 300 500 300 
 B2s        4000 4000 4000 0
 
