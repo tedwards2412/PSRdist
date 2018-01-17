@@ -25,29 +25,26 @@ sources = np.array([
             ["B0628-28", 34.36, 236.95, -16.75],
             ["B1237+25", 9.2755, 252.44, 86.54]]) # Name, DM, glon [deg], glat [deg]
 
-for source, DM, l, b in sources:
-    t1 = time.time()
-    print " --- %s --- "%source
-    D_list = []
-    l = float(l)
-    b = float(b)
-    DM = float(DM)
-    for n1 in n1_list:
-        vals[names=='n1'] = n1
-        for H1 in H1_list:
-            vals[names=='H1'] = H1
-            np.savetxt(filename, zip(names, vals), 
-                delimiter=" ", fmt="%s") 
-            D_list.append(ymw.distance(l=l, b=b, DM=DM, vbs=0))
-    
-    t2 = time.time()
-    print "Evaluating %i grid points took %.2fs"%(ngrid**2, t2-t1)
-    D_list = np.array(D_list)
-    D_list*=1
+# Calculate distances for each source at each gridpoint
+DM, l, b = np.asarray(sources[:,1:], dtype=np.float).T
+t1 = time.time()
+D_list = []
+for n1 in n1_list:
+    vals[names=='n1'] = n1
+    for H1 in H1_list:
+        vals[names=='H1'] = H1
+        np.savetxt(filename, zip(names, vals),
+            delimiter=" ", fmt="%s")
+        D_list.append(list(ymw.distances(l=l, b=b, DM=DM, vbs=0)))
+D_list = np.array(D_list)
+t2 = time.time()
+print "Evaluating %i grid points for %i sources took %.2fs"%(ngrid**2, len(sources), t2-t1)
+
+for i in range(len(sources)):
     plt.figure()
-    plt.hist(D_list, bins=np.linspace(0, 10, 161))
-    plt.title(r"%s"%source)
+    plt.hist(D_list.T[i], bins=np.linspace(0, 10, 161))
+    plt.title(r"%s"%sources[i,0])
     plt.ylabel('N')
     plt.xlabel('D [kpc]')
-    plt.savefig('examples/%s_test.pdf'%(source))
+    plt.savefig('examples/%s_test.pdf'%(sources[i,0]))
     plt.close()
