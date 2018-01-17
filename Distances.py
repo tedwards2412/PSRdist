@@ -1,20 +1,9 @@
 from __future__ import division
 import numpy as np
-from scipy.integrate import quad, dblquad
-from scipy.constants import parsec
-from scipy.special import erfinv
 import matplotlib.pyplot as plt
-import healpy as hp
-import sys
-import os
-import threading, subprocess
-from math import cos, sin, erf, atan
-import time
-import os
 import ctypes as C
-import scipy.interpolate as interpolate
 import subprocess
-from scipy.stats import lognorm
+import py_ymw16 as ymw
 
 AngRes = 0.5
 
@@ -32,25 +21,26 @@ def ymw16(DM, l, b):
 
     Arguments
     ---------
-    DM [float] : Dispersion measure # in pp/cm^3
-    l [float] : longitude (galactic coordinates)
-    b [float] : latitude (galactic coordinates)
+    DM [array] : Dispersion measure # in pp/cm^3
+    l [array] : longitude (galactic coordinates)
+    b [array] : latitude (galactic coordinates)
     
     Returns
     -------
-    Dist [float] : Distance to MSP # in kpc
+    Dist [array] : Distance to MSP # in pc
     """
-    try:
-        p = subprocess.check_output(["./ymw16", "Gal", str(l), str(b),str(DM), "1"])
-    except subprocess.CalledProcessError as e:
-        if e.returncode == 53 or e.returncode == 137:
-            p = e.output
-        else:
-            raise e
-    Dist = float(p[105:114])/1e3
+    # try:
+    #     p = subprocess.check_output(["./ymw16", "Gal", str(l), str(b),str(DM), "1"])
+    # except subprocess.CalledProcessError as e:
+    #     if e.returncode == 53 or e.returncode == 137:
+    #         p = e.output
+    #     else:
+    #         raise e
+    # Dist = float(p[105:114])/1e3
+    Dist = ymw.distances(l=l, b=b, DM=DM)
     return Dist
 
-def dist_pdf(DM, l, b, n_dbins, plots=False):
+def dist_pdf(name, DM, l, b, n_dbins, MC=True, save_files=False, plots=False):
     """
     Calcultes the distance to a source using the provided
     despersion measure. This function assumes the ymw16 model
@@ -71,9 +61,9 @@ def dist_pdf(DM, l, b, n_dbins, plots=False):
     
     Returns
     -------
-    Dist [array, array] : PDFs of the distance to MSPs # in kpc
+    Dist [array, array] : PDFs of the distance to MSPs # in pc
     """
-    filename = 'ymw16par.txt'
+    filename = 'ymw16_v1.3/ymw16par.txt'
     names = np.loadtxt(filename, usecols=(0,), dtype='str')
     vals = np.loadtxt(filename, usecols=(1,))
 
@@ -81,42 +71,38 @@ def dist_pdf(DM, l, b, n_dbins, plots=False):
     H1_list = np.linspace(1200, 2000, 18)
     dist_pdfs = []
 
-    for DM, l, b in zip(DM, l, b):
-        D_list = []
-        l = float(l)
-        b = float(b)
-        DM = float(DM)
-        for n1 in n1_list:
-            vals[names=='n1'] = n1
-            for H1 in H1_list:
-                vals[names=='H1'] = H1
-                np.savetxt(filename, zip(names, vals), 
-                    delimiter=" ", fmt="%s") 
-                D_list.append(float(Distance(DM=DM, 
-                    l=l, b=b, ne2001=False)))
-        d_hist = np.histogram(D_list, bins=n_dbins, density=True)
-        if plots:
-            d_bins = np.linspace(0,max(D_list), num=n_dbins)
+    D_list = []
+    for n1 in n1_list:
+        vals[names=='n1'] = n1
+        for H1 in H1_list:
+            vals[names=='H1'] = H1
+            np.savetxt(filename, zip(names, vals), 
+                delimiter=" ", fmt="%s") 
+            D_list.append(ymw16(DM=DM, l=l, b=b))
+    D_list = np.array(D_list)
+    for i in range(DM.size):
+        d_hist = np.histogram(D_list[:,i], bins=n_dbins, density=True)
+        dist_pdfs.append(d_hist)
+
+    if plots:
+        for i in range(DM.size):
+            print i
             plt.figure()
-            plt.hist(D_list, bins=d_bins, normed=True)
+            plt.hist(D_list[:,i], bins=n_dbins, normed=True)
             plt.ylabel('N')
+            plt.title('%s_test.pdf'%(str(name[i])))
             plt.xlabel('D [kpc]')
-            plt.savefig('%s_test.pdf'%(str(DM)))
+            plt.savefig('%s_test.pdf'%(str(name[i])))
             plt.close()
-        dist_pdfs.append(d_hist[0])
+
+    if save_files:
+        print "hello"
+        # Do some saving
 
     return dist_pdfs
-
-# def Distance(DM, l, b, ne2001=True):
-#     """
-#     Short wrapper for the above to functions
-#     """
-#     D = ymw16(DM, l, b)
-#     return D
-
-
-# DM = np.array([4., 2., 3.])
-# l = np.array([10., 20., 30.])
-# b = np.array([15., 25., 35.])
-# newthing = dist_pdf(DM, l, b, 20, plots=True)
-# print newthing
+names = np.array(["B0628-28", "B1237+25", "B1237+201"])
+DM = np.array([4., 2., 3.])
+l = np.array([10., 20., 30.])
+b = np.array([15., 25., 35.])
+newthing = dist_pdf(names, DM, l, b, 20, plots=True, save_files=True)
+print newthing
