@@ -5,8 +5,6 @@ import ctypes as C
 import subprocess
 import py_ymw16 as ymw
 
-AngRes = 0.5
-
 def ymw16(DM, l, b):
     """
     Calcultes the distance to a source using the provided
@@ -55,10 +53,16 @@ def dist_pdf(name, DM, l, b, n_dbins, MC=True, save_files=False, plots=False):
 
     Arguments
     ---------
+    name [array] : List of names of sources for labelling
     DM [array] : Dispersion measure # in pp/cm^3
     l [array] : longitude (galactic coordinates)
     b [array] : latitude (galactic coordinates)
     
+    Keyword arguments:
+    MC -- Monte Carlo vs grid scan (default True)
+    save_files -- saves pdfs as txt files (default False)
+    plots -- pdf plots for each pulsar (default False)
+
     Returns
     -------
     Dist [array, array] : PDFs of the distance to MSPs # in pc
@@ -86,7 +90,6 @@ def dist_pdf(name, DM, l, b, n_dbins, MC=True, save_files=False, plots=False):
 
     if plots:
         for i in range(DM.size):
-            print i
             plt.figure()
             plt.hist(D_list[:,i], bins=n_dbins, normed=True)
             plt.ylabel('N')
@@ -96,13 +99,14 @@ def dist_pdf(name, DM, l, b, n_dbins, MC=True, save_files=False, plots=False):
             plt.close()
 
     if save_files:
-        print "hello"
-        # Do some saving
+        for i in range(DM.size):
+            np.savetxt(name[i], zip(dist_pdfs[i][0], dist_pdfs[i][1]), 
+                    delimiter=" ", fmt="%s") 
 
     return dist_pdfs
+
 names = np.array(["B0628-28", "B1237+25", "B1237+201"])
 DM = np.array([4., 2., 3.])
 l = np.array([10., 20., 30.])
 b = np.array([15., 25., 35.])
 newthing = dist_pdf(names, DM, l, b, 20, plots=True, save_files=True)
-print newthing
