@@ -21,7 +21,8 @@ cimport py_ymw16
 
 cpdef double distance(double l, double b, double DM,
     double DM_Host=0,
-    int ndir=1, int _np=1, int vbs=0) nogil:
+    int ndir=1, int _np=1, int vbs=0,
+    char* dirname="./ymw16_v1.3/") nogil:
     """
 
     Arguments
@@ -33,22 +34,21 @@ cpdef double distance(double l, double b, double DM,
     ndir : (1) DM to distance, (2) distance to DM
     _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy
     vbs : verbose (default is 0)
+    dirname : directory of the ymw16 code input files
 
     Returns
     -------
     Distance in kpc
     """
-
-
     # Fix names of directories
-    cdef char* dirname = "./ymw16_v1.3/"
     cdef char* text = ""
 
     return dmdtau(gl=l, gb=b, dordm=DM, DM_Host=DM_Host,
         ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
 
 cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
-  double DM_Host=0, int ndir=1, int _np=1, int vbs=0):
+  double DM_Host=0, int ndir=1, int _np=1, int vbs=0,
+  char* dirname="./ymw16_v1.3/"):
   """
 
   Arguments
@@ -60,6 +60,7 @@ cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
   ndir : (1) DM to distance, (2) distance to DM
   _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy
   vbs : verbose (default is 0)
+  dirname : directory to the ymw16 code input files
 
   Returns
   -------
@@ -73,6 +74,7 @@ cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
   with nogil:
     for iN in range(N):
       D[iN] = distance(l=l[iN], b=b[iN], DM=DM[iN],
-              DM_Host=DM_Host, ndir=ndir, _np=_np, vbs=vbs) ;
+              DM_Host=DM_Host, ndir=ndir, _np=_np, vbs=vbs,
+              dirname=dirname) ;
 
   return D
