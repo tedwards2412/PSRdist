@@ -23,7 +23,20 @@ cpdef double distance(double l, double b, double DM,
     double DM_Host=0,
     int ndir=1, int _np=1, int vbs=0) nogil:
     """
-    returns distance in kpc
+
+    Arguments
+    ---------
+    DM [double/float] : Dispersion measure # in pp/cm^3
+    l [double/float] : longitude (galactic coordinates) [deg]
+    b [double/float] : latitude (galactic coordinates) [deg]
+    DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)
+    ndir : (1) DM to distance, (2) distance to DM
+    _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy
+    vbs : verbose (default is 0)
+
+    Returns
+    -------
+    Distance in kpc
     """
 
 
@@ -37,7 +50,20 @@ cpdef double distance(double l, double b, double DM,
 cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
   double DM_Host=0, int ndir=1, int _np=1, int vbs=0):
   """
-  Return distances for multiple sources
+
+  Arguments
+  ---------
+  DM [array] : Dispersion measure # in pp/cm^3
+  l [array] : longitude (galactic coordinates) [deg]
+  b [array] : latitude (galactic coordinates) [deg]
+  DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)
+  ndir : (1) DM to distance, (2) distance to DM
+  _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy
+  vbs : verbose (default is 0)
+
+  Returns
+  -------
+  Distances for multiple sources in kpc
   """
 
   cdef int N = len(l) ; # Number of sources
