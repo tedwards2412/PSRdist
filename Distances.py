@@ -32,7 +32,7 @@ def ymw16(DM, l, b):
     """
     Dist = ymw.distances(l=l, b=b, DM=DM, dirname=dirname+"/ymw16_v1.3/")
     # Dist = ymw.distances(l=l, b=b, DM=DM)
-    return Dist
+    return np.array(Dist)
 
 
 def dist_bf(name, DM, l, b):
@@ -57,14 +57,26 @@ def dist_bf(name, DM, l, b):
     filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
     names_bf = np.loadtxt(filename_bf, usecols=(0,), dtype='str')
     vals_bf = np.loadtxt(filename_bf, usecols=(1,))
+    # --> remove incomplete Ele_arm and Wid_arm
+    vals_bf = vals_bf[(names_bf!='Wid_arm') & (names_bf!='Ele_arm')]
+    names_bf = names_bf[(names_bf!='Wid_arm') & (names_bf!='Ele_arm')]
+    # --> have to load Ele_arm separately (since it has one column for each narm)
+    with open(filename_bf) as fp:
+        for line in fp.readlines():
+          if "Ele_arm" in line:
+              narm = np.array(line.split(" ")[1:], dtype='float')
+          if "Wid_arm" in line:
+              warm = np.array(line.split(" ")[1:], dtype='float')
 
-    # Load the input file for the ymw16_v1.3 code
+
+    # reset the input file for the ymw16_v1.3 code and load the values
     filename_input = dirname + '/ymw16_v1.3/ymw16par.txt'
     np.savetxt(filename_input, zip(names_bf, vals_bf),
             delimiter=" ", fmt="%s")
+    with open(filename_input, 'a') as f:
+        f.write('Ele_arm %.6f %.6f %.6f %.6f %.6f\n'%tuple(narm))
+        f.write('Wid_arm %i %i %i %i %i\n'%tuple(warm))
     print "Resetting input file: Done!"
-    names = np.loadtxt(filename_input, usecols=(0,), dtype='str')
-    vals = np.loadtxt(filename_input, usecols=(1,))
 
     return ymw16(DM=DM, l=l, b=b)
 
@@ -106,14 +118,38 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
     filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
     names_bf = np.loadtxt(filename_bf, usecols=(0,), dtype='str')
     vals_bf = np.loadtxt(filename_bf, usecols=(1,))
+    # --> remove incomplete Ele_arm and Wid_arm
+    vals_bf = vals_bf[(names_bf!='Wid_arm') & (names_bf!='Ele_arm')]
+    names_bf = names_bf[(names_bf!='Wid_arm') & (names_bf!='Ele_arm')]
+    # --> have to load Ele_arm separately (since it has one column for each narm)
+    with open(filename_bf) as fp:
+        for line in fp.readlines():
+          if "Ele_arm" in line:
+              narm = np.array(line.split(" ")[1:], dtype='float')
+          if "Wid_arm" in line:
+              warm = np.array(line.split(" ")[1:], dtype='float')
 
-    # Load the input file for the ymw16_v1.3 code
+
+    # reset the input file for the ymw16_v1.3 code and load the values
     filename_input = dirname + '/ymw16_v1.3/ymw16par.txt'
     np.savetxt(filename_input, zip(names_bf, vals_bf),
             delimiter=" ", fmt="%s")
+    with open(filename_input, 'a') as f:
+        f.write('Ele_arm %.6f %.6f %.6f %.6f %.6f\n'%tuple(narm))
+        f.write('Wid_arm %i %i %i %i %i\n'%tuple(warm))
     print "Resetting input file: Done!"
+
     names = np.loadtxt(filename_input, usecols=(0,), dtype='str')
     vals = np.loadtxt(filename_input, usecols=(1,))
+    vals = vals[(names!='Wid_arm') & (names!='Ele_arm')]
+    names = names[(names!='Wid_arm') & (names!='Ele_arm')]
+    with open(filename_input) as fp:
+        for line in fp.readlines():
+          if "Ele_arm" in line:
+              narm = np.array(line.split(" ")[1:], dtype='float')
+          if "Wid_arm" in line:
+              warm = np.array(line.split(" ")[1:], dtype='float')
+    narm_unc = np.loadtxt('%s/ymw16_v1.3/ymw16par_Ele_arm_unc.txt'%dirname)
 
     # Load the file containing parameter ranges and best fit values
     filename_ranges = dirname + '/ymw16_v1.3/ymw16par_ranges.txt'
@@ -140,6 +176,8 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
             # corresponding to the uncertainty in table 2 of YMW16
             val_MC = np.random.normal(loc=val_bf[mask1], scale=val_unc[mask1],
                 size=(n_MC, mask1.sum()))
+            val_narm_MC = np.random.normal(loc=narm, scale=narm_unc,
+                size=(n_MC, len(narm)))
 
         elif MC_mode[:8]=='gaussian':
             # Draw from a gaussian distribution with an uncertainty
@@ -148,6 +186,8 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
             val_MC = np.random.normal(loc=val_bf[mask1],
                 scale=val_bf[mask1] * sig,
                 size=(n_MC, mask1.sum()))
+            val_narm_MC = np.random.normal(loc=narm, scale=narm * sig,
+                size=(n_MC, len(narm)))
 
         elif MC_mode == 'uniform':
             # Draw from a uniform distribution
@@ -161,6 +201,9 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
             vals[ind_order] = val_MC[i] # Set values
             np.savetxt(filename_input, zip(names, vals),
                 delimiter=" ", fmt="%s")
+            with open(filename_input, 'a') as f:
+                f.write('Ele_arm %.6f %.6f %.6f %.6f %.6f\n'%tuple(val_narm_MC[i]))
+                f.write('Wid_arm %i %i %i %i %i\n'%tuple(warm))
             D_list.append(ymw16(DM=DM, l=l, b=b))
         D_list = np.array(D_list)
 
