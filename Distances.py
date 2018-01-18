@@ -1,7 +1,12 @@
 from __future__ import division
+import ctypes
 import numpy as np
 import matplotlib.pyplot as plt
 import py_ymw16 as ymw
+import os
+
+# Get directory name
+dirname = os.path.dirname(os.path.realpath(__file__))
 
 def ymw16(DM, l, b):
     """
@@ -25,7 +30,8 @@ def ymw16(DM, l, b):
     -------
     Dist [array] : Distance to MSP # in kpc
     """
-    Dist = ymw.distances(l=l, b=b, DM=DM)
+    Dist = ymw.distances(l=l, b=b, DM=DM, dirname=dirname+"/ymw16_v1.3/")
+    # Dist = ymw.distances(l=l, b=b, DM=DM)
     return Dist
 
 
@@ -48,31 +54,24 @@ def dist_bf(name, DM, l, b):
     Dist [array] : Distance to MSPs # in kpc
     """
     # original best fit values
-    filename_bf = 'ymw16_v1.3/ymw16par_bestfit.txt'
+    filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
     names_bf = np.loadtxt(filename_bf, usecols=(0,), dtype='str')
     vals_bf = np.loadtxt(filename_bf, usecols=(1,))
 
     # Load the input file for the ymw16_v1.3 code
-    filename_input = 'ymw16_v1.3/ymw16par.txt'
+    filename_input = dirname + '/ymw16_v1.3/ymw16par.txt'
     np.savetxt(filename_input, zip(names_bf, vals_bf),
             delimiter=" ", fmt="%s")
     print "Resetting input file: Done!"
     names = np.loadtxt(filename_input, usecols=(0,), dtype='str')
     vals = np.loadtxt(filename_input, usecols=(1,))
-    # if (names==names_bf).all():
-    #     vals = vals_bf
-    #     print "Resetting input file... Done!"
-    #     np.savetxt(filename_input, zip(names, vals),
-    #         delimiter=" ", fmt="%s")
-    # else:
-    #     print "Cannot reset input file, quitting"
-    #     quit()
 
     return ymw16(DM=DM, l=l, b=b)
 
 # def dist_pdf(name, DM, l, b, n_dbins,
 def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
-    MC=True, save_files=False, plots=False,
+    MC=True, MC_mode = "bestfit",
+    save_files=False, plots=False,
     n_grid=10, n_MC=1000):
     """
     Calcultes the distance to a source using the provided
@@ -93,6 +92,7 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
     n_MC [float] : number of monte carlo samples
 
     Keyword arguments:
+    MC_mode -- bestfit, uniform, gaussian# (# = error in %)
     MC -- Monte Carlo vs grid scan (default True)
     save_files -- saves pdfs as txt files (default False)
     plots -- pdf plots for each pulsar (default False)
@@ -103,26 +103,20 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
     dist_edges [array] : Edges of the pdf histogram # [kpc]
     """
     # original best fit values
-    filename_bf = 'ymw16_v1.3/ymw16par_bestfit.txt'
+    filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
     names_bf = np.loadtxt(filename_bf, usecols=(0,), dtype='str')
     vals_bf = np.loadtxt(filename_bf, usecols=(1,))
 
     # Load the input file for the ymw16_v1.3 code
-    filename_input = 'ymw16_v1.3/ymw16par.txt'
+    filename_input = dirname + '/ymw16_v1.3/ymw16par.txt'
     np.savetxt(filename_input, zip(names_bf, vals_bf),
             delimiter=" ", fmt="%s")
     print "Resetting input file: Done!"
     names = np.loadtxt(filename_input, usecols=(0,), dtype='str')
     vals = np.loadtxt(filename_input, usecols=(1,))
-    # if (names==names_bf).all():
-    #     vals = vals_bf
-    #     print "Resetting input file... Done!"
-    # else:
-    #     print "Cannot reset input file, quitting"
-    #     quit()
 
     # Load the file containing parameter ranges and best fit values
-    filename_ranges = 'ymw16_v1.3/ymw16par_ranges.txt'
+    filename_ranges = dirname + '/ymw16_v1.3/ymw16par_ranges.txt'
     names_ranges = np.loadtxt(filename_ranges, usecols=(0,), dtype='str')
     val_lo, val_hi, val_bf, val_unc = np.loadtxt(
         filename_ranges, usecols=(1,2,3,4)).T
@@ -132,18 +126,34 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
     dist_pdfs = []
     dist_edges = []
     if MC:
-        tag="_MC"
+        tag="_MC_%s"%MC_mode
 
         # Mask that says which parameters to vary
         mask1 = (val_lo != val_hi)
         print "Number of free parameters: %i"%mask1.sum()
 
-        # Draw from a uniform distribution
-        val_MC = np.random.uniform(low=val_lo[mask1], high=val_hi[mask1],
-            size=(n_MC, mask1.sum()))
-
         # Match the MC values to input file values
         ind_order = np.array([(n==names).argmax() for n in names_ranges[mask1]])
+
+        if MC_mode == 'bestfit':
+            # Draw from a gaussian distribution with an uncertainty
+            # corresponding to the uncertainty in table 2 of YMW16
+            val_MC = np.random.normal(loc=val_bf[mask1], scale=val_unc[mask1],
+                size=(n_MC, mask1.sum()))
+
+        elif MC_mode[:8]=='gaussian':
+            # Draw from a gaussian distribution with an uncertainty
+            # of a given percentage (appended after gaussian)
+            sig = float(MC_mode[8:])/100.
+            val_MC = np.random.normal(loc=val_bf[mask1],
+                scale=val_bf[mask1] * sig,
+                size=(n_MC, mask1.sum()))
+
+        elif MC_mode == 'uniform':
+            # Draw from a uniform distribution
+            val_MC = np.random.uniform(low=val_lo[mask1], high=val_hi[mask1],
+                size=(n_MC, mask1.sum()))
+
 
         # Run MC
         for i in range(n_MC):
@@ -186,6 +196,7 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
     # --> make plots
     if plots:
         for i in range(DM.size):
+            print tag
             plt.figure()
             plt.hist(D_list[:,i], bins=n_dbins, normed=True)
             plt.ylabel('N')
