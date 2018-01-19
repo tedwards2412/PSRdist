@@ -149,13 +149,14 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
               narm = np.array(line.split(" ")[1:], dtype='float')
           if "Wid_arm" in line:
               warm = np.array(line.split(" ")[1:], dtype='float')
-    narm_unc = np.loadtxt('%s/ymw16_v1.3/ymw16par_Ele_arm_unc.txt'%dirname)
 
     # Load the file containing parameter ranges and best fit values
     filename_ranges = dirname + '/ymw16_v1.3/ymw16par_ranges.txt'
     names_ranges = np.loadtxt(filename_ranges, usecols=(0,), dtype='str')
     val_lo, val_hi, val_bf, val_unc = np.loadtxt(
         filename_ranges, usecols=(1,2,3,4)).T
+    narm_unc = np.loadtxt('%s/ymw16_v1.3/ymw16par_Ele_arm_unc.txt'%dirname)
+    narm_lo, narm_hi = np.loadtxt('%s/ymw16_v1.3/ymw16par_Ele_arm_ranges.txt'%dirname).T
 
     # Create list
     D_list = []
@@ -193,6 +194,8 @@ def dist_pdf(name, DM, l, b, d_edges=np.linspace(0, 10, 101),
             # Draw from a uniform distribution
             val_MC = np.random.uniform(low=val_lo[mask1], high=val_hi[mask1],
                 size=(n_MC, mask1.sum()))
+            val_narm_MC = np.random.uniform(low=narm_lo, high=narm_hi,
+                size=(n_MC, len(narm)))
 
 
         # Run MC

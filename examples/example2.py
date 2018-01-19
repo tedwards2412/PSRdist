@@ -13,8 +13,12 @@ names = np.array(["B0628-28", "B1237+25"])
 DM = np.array([34.36, 9.2755])
 l = np.array([236.95, 252.44])
 b = np.array([-16.75, 86.54])
-for MC_mode in ["uniform", "bestfit", "gaussian5", "gaussian10",
-    "gaussian20"]:
+for MC_mode in [
+    "uniform", "bestfit",
+    "gaussian5", "gaussian10",
+    "gaussian20",
+    "gaussian15"
+    ]:
 
     tag = "_MC_%s"%MC_mode
     dist_pdfs, dist_edges = D.dist_pdf(name=names, DM=DM, l=l, b=b,
