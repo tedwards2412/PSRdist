@@ -272,9 +272,6 @@ def dist_pdf(name, DM, l, b,
     # --> save files
     if save_files:
         for i in range(DM.size):
-            # np.savetxt("output/%s_%s.dat"%(name[i], tag),
-            #     zip(dist_pdfs[i][0], dist_pdfs[i][1]),
-            #         delimiter=" ")
             if mode=="kde":
                 np.savetxt(workingdir + "/output/%s_pdf_%s_%s.dat"%(name[i], mode, MC_mode),
                     zip(dist[i], dist_pdfs[i]), delimiter=" ")
@@ -286,4 +283,7 @@ def dist_pdf(name, DM, l, b,
                     dist[i], delimiter=" ")
 
 
-    return dist_pdfs, dist
+    if error:
+        return dist_pdfs, dist, errors
+    else:
+        return dist_pdfs, dist
