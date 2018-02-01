@@ -27,13 +27,13 @@ def ymw16(DM, l, b):
 
     Arguments
     ---------
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
 
     Returns
     -------
-    Dist [array] : Distance to MSP # in kpc
+    * Dist [array] : Distance to MSP # in kpc
     """
     Dist = ymw.distances(l=l, b=b, DM=DM, dirname=dirname+"/ymw16_v1.3/")
     # Dist = ymw.distances(l=l, b=b, DM=DM)
@@ -49,10 +49,10 @@ def dist_bf(name, DM, l, b):
 
     Arguments
     ---------
-    name [array] : List of names of sources for labelling
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
+    * name [array] : List of names of sources for labelling
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
 
     Returns
     -------
@@ -103,24 +103,24 @@ def dist_pdf(name, DM, l, b,
 
     Arguments
     ---------
-    name [array] : List of names of sources for labelling
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
-    n_MC [float] : number of monte carlo samples
-    mode [str] : return PDF from kernel density estimator (kde) or
+    * name [array] : List of names of sources for labelling
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
+    * n_MC [float] : number of monte carlo samples
+    * mode [str] : return PDF from kernel density estimator (kde) or
                  as a hisgogram (hist).
-    nd [int] : number of distance values (kde) or bins (hist)
+    * nd [int] : number of distance values (kde) or bins (hist)
 
     Keyword arguments:
-    MC_mode -- bestfit, uniform, gaussian# (# = error in %)
-    save_files -- saves pdfs as txt files (default False)
-    plots -- pdf plots for each pulsar (default False)
+    * MC_mode -- bestfit, uniform, gaussian# (# = error in %)
+    * save_files -- saves pdfs as txt files (default False)
+    * plots -- pdf plots for each pulsar (default False)
 
     Returns
     -------
-    dist_pdfs [array] : PDFs of the distance to MSPs
-    dist [array] : distances for each pdf point (if kde) or
+    * dist_pdfs [array] : PDFs of the distance to MSPs
+    * dist [array] : distances for each pdf point (if kde) or
                    bin edges (if hist) # [kpc]
     """
     # original best fit values

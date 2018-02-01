@@ -27,4 +27,5 @@ setup(name='MSPDist',
       packages=['MSPDist'],
       data_files=[('lib/python2.7/site-packages/MSPDist/ymw16_v1.3/', ['MSPDist/ymw16_v1.3/ymw16par_ranges.txt', 'MSPDist/ymw16_v1.3/ymw16par_Ele_arm_unc.txt','MSPDist/ymw16_v1.3/ymw16par_bestfit.txt','MSPDist/ymw16_v1.3/ymw16par_Ele_arm_ranges.txt','MSPDist/ymw16_v1.3/spiral.txt','MSPDist/ymw16_v1.3/ymw16par.txt'])],
     ext_modules = cythonize(extensions),
+    long_description=open('README.md').read()
 )
