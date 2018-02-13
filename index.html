@@ -3,8 +3,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
-    <title>PSRDist API documentation</title>
-    <meta name="description" content="# PSRDist
+    <title>PSRdist API documentation</title>
+    <meta name="description" content="# PSRdist
 Calculates probability density functions for the distances to Millisecond Pulsars.
 Code co..." />
 
@@ -1045,8 +1045,8 @@ table {
     <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
       
   <ul>
-    <li class="mono"><a href="#PSRDist.dirname">dirname</a></li>
-    <li class="mono"><a href="#PSRDist.workingdir">workingdir</a></li>
+    <li class="mono"><a href="#PSRdist.dirname">dirname</a></li>
+    <li class="mono"><a href="#PSRdist.workingdir">workingdir</a></li>
   </ul>
 
     </li>
@@ -1055,7 +1055,7 @@ table {
 
     <li class="set"><h3><a href="#header-submodules">Sub-modules</a></h3>
       <ul>
-        <li class="mono"><a href="Distances.m.html">PSRDist.Distances</a></li>
+        <li class="mono"><a href="Distances.m.html">PSRdist.Distances</a></li>
       </ul>
     </li>
     </ul>
@@ -1069,8 +1069,8 @@ table {
 
 
   <header id="section-intro">
-  <h1 class="title"><span class="name">PSRDist</span> module</h1>
-  <h1>PSRDist</h1>
+  <h1 class="title"><span class="name">PSRdist</span> module</h1>
+  <h1>PSRdist</h1>
 <p>Calculates probability density functions for the distances to Millisecond Pulsars.
 Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.</p>
 <h2>Requirements and installation</h2>
@@ -1080,12 +1080,12 @@ Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester
 </ul>
 <p>Compile the cython code by running ./make.sh. Then py_ymw16 can be imported by python.
 Currently there is an issue with reading and writing to files in installation directories
-For now simply add MSPDist directory to your PYTHONPATH</p>
+For now simply add PSRdist directory to your PYTHONPATH</p>
 <h2>Errors</h2>
 <p>We assume the ymw16 model for the electron density distribution of our galaxy
 To calculate the errors on the distances to the pulsars we assume that the
 parameters of the ymw16 are uncertain and perform a grid scan to produce an array
-of distances to each MSP. We then create a pdf through a normalised histogram of this list.</p>
+of distances to each PSR. We then create a pdf through a normalised histogram of this list.</p>
 <h2>Changes in the original ymw16 code.</h2>
 <p>The version of the ymw16 code provided contains some changes compared to the original in the following files:
 - cn.h
@@ -1093,9 +1093,9 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 - ymw16par.txt</p>
 <p>The original best fit parameters from the ymw16 paper can be found in ymw16par_bestfit.txt.</p>
   
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRDist', this);">Show source &equiv;</a></p>
-  <div id="source-PSRDist" class="source">
-    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;# PSRDist</span>
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist', this);">Show source &equiv;</a></p>
+  <div id="source-PSRdist" class="source">
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;# PSRdist</span>
 <span class="sd">Calculates probability density functions for the distances to Millisecond Pulsars.</span>
 <span class="sd">Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.</span>
 
@@ -1105,13 +1105,13 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 
 <span class="sd">Compile the cython code by running ./make.sh. Then py_ymw16 can be imported by python.</span>
 <span class="sd">Currently there is an issue with reading and writing to files in installation directories</span>
-<span class="sd">For now simply add MSPDist directory to your PYTHONPATH</span>
+<span class="sd">For now simply add PSRdist directory to your PYTHONPATH</span>
 
 <span class="sd">## Errors</span>
 <span class="sd">We assume the ymw16 model for the electron density distribution of our galaxy</span>
 <span class="sd">To calculate the errors on the distances to the pulsars we assume that the</span>
 <span class="sd">parameters of the ymw16 are uncertain and perform a grid scan to produce an array</span>
-<span class="sd">of distances to each MSP. We then create a pdf through a normalised histogram of this list.</span>
+<span class="sd">of distances to each PSR. We then create a pdf through a normalised histogram of this list.</span>
 
 <span class="sd">## Changes in the original ymw16 code.</span>
 <span class="sd">The version of the ymw16 code provided contains some changes compared to the original in the following files:</span>
@@ -1122,7 +1122,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 <span class="sd">The original best fit parameters from the ymw16 paper can be found in ymw16par_bestfit.txt.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">PSRDist.Distances</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">PSRdist.Distances</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">py_ymw16</span> <span class="kn">as</span> <span class="nn">ymw</span>
 </pre></div>
 
@@ -1133,7 +1133,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
   <section id="section-items">
     <h2 class="section-title" id="header-variables">Module variables</h2>
       <div class="item">
-      <p id="PSRDist.dirname" class="name">var <span class="ident">dirname</span></p>
+      <p id="PSRdist.dirname" class="name">var <span class="ident">dirname</span></p>
       
   
   <div class="source_cont">
@@ -1141,7 +1141,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 
       </div>
       <div class="item">
-      <p id="PSRDist.workingdir" class="name">var <span class="ident">workingdir</span></p>
+      <p id="PSRdist.workingdir" class="name">var <span class="ident">workingdir</span></p>
       
   
   <div class="source_cont">
@@ -1153,7 +1153,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 
     <h2 class="section-title" id="header-submodules">Sub-modules</h2>
       <div class="item">
-      <p class="name"><a href="Distances.m.html">PSRDist.Distances</a></p>
+      <p class="name"><a href="Distances.m.html">PSRdist.Distances</a></p>
       
   
 
