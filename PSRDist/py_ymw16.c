@@ -6,13 +6,13 @@
         "depends": [
             "//anaconda/lib/python2.7/site-packages/numpy/core/include/numpy/arrayobject.h", 
             "//anaconda/lib/python2.7/site-packages/numpy/core/include/numpy/ufuncobject.h", 
-            "ymw16_v1.3/cn.h"
+            "MSPDist/ymw16_v1.3/cn.h"
         ], 
         "include_dirs": [
             "//anaconda/lib/python2.7/site-packages/numpy/core/include"
         ]
     }, 
-    "module_name": "py_ymw16"
+    "module_name": "MSPDist.py_ymw16"
 }
 END: Cython Metadata */
 
@@ -443,8 +443,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__py_ymw16
-#define __PYX_HAVE_API__py_ymw16
+#define __PYX_HAVE__MSPDist__py_ymw16
+#define __PYX_HAVE_API__MSPDist__py_ymw16
 #include "ymw16_v1.3/cn.h"
 #include <string.h>
 #include <stdio.h>
@@ -670,7 +670,7 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "py_ymw16.pyx",
+  "MSPDist/py_ymw16.pyx",
   "__init__.pxd",
   "stringsource",
   "type.pxd",
@@ -1025,17 +1025,17 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  * cdef inline object PyArray_MultiIterNew1(a):
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
-struct __pyx_opt_args_8py_ymw16_distance;
-struct __pyx_opt_args_8py_ymw16_distances;
+struct __pyx_opt_args_7MSPDist_8py_ymw16_distance;
+struct __pyx_opt_args_7MSPDist_8py_ymw16_distances;
 
-/* "py_ymw16.pyx":22
+/* "MSPDist/py_ymw16.pyx":22
  * @cython.initializedcheck(False)
  * 
  * cpdef double distance(double l, double b, double DM,             # <<<<<<<<<<<<<<
  *     double DM_Host=0,
  *     int ndir=1, int _np=1, int vbs=0,
  */
-struct __pyx_opt_args_8py_ymw16_distance {
+struct __pyx_opt_args_7MSPDist_8py_ymw16_distance {
   int __pyx_n;
   double DM_Host;
   int ndir;
@@ -1044,14 +1044,14 @@ struct __pyx_opt_args_8py_ymw16_distance {
   char *dirname;
 };
 
-/* "py_ymw16.pyx":49
+/* "MSPDist/py_ymw16.pyx":49
  *         ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
  * 
  * cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,             # <<<<<<<<<<<<<<
  *   double DM_Host=0, int ndir=1, int _np=1, int vbs=0,
  *   char* dirname="./ymw16_v1.3/"):
  */
-struct __pyx_opt_args_8py_ymw16_distances {
+struct __pyx_opt_args_7MSPDist_8py_ymw16_distances {
   int __pyx_n;
   double DM_Host;
   int ndir;
@@ -1857,7 +1857,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, cha
 
 /* Module declarations from 'cython' */
 
-/* Module declarations from 'py_ymw16' */
+/* Module declarations from 'MSPDist.py_ymw16' */
 static PyTypeObject *__pyx_array_type = 0;
 static PyTypeObject *__pyx_MemviewEnum_type = 0;
 static PyTypeObject *__pyx_memoryview_type = 0;
@@ -1869,8 +1869,8 @@ static PyObject *contiguous = 0;
 static PyObject *indirect_contiguous = 0;
 static int __pyx_memoryview_thread_locks_used;
 static PyThread_type_lock __pyx_memoryview_thread_locks[8];
-static double __pyx_f_8py_ymw16_distance(double, double, double, int __pyx_skip_dispatch, struct __pyx_opt_args_8py_ymw16_distance *__pyx_optional_args); /*proto*/
-static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int __pyx_skip_dispatch, struct __pyx_opt_args_8py_ymw16_distances *__pyx_optional_args); /*proto*/
+static double __pyx_f_7MSPDist_8py_ymw16_distance(double, double, double, int __pyx_skip_dispatch, struct __pyx_opt_args_7MSPDist_8py_ymw16_distance *__pyx_optional_args); /*proto*/
+static __Pyx_memviewslice __pyx_f_7MSPDist_8py_ymw16_distances(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int __pyx_skip_dispatch, struct __pyx_opt_args_7MSPDist_8py_ymw16_distances *__pyx_optional_args); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -1904,10 +1904,10 @@ static void __pyx_memoryview_refcount_objects_in_slice(char *, Py_ssize_t *, Py_
 static void __pyx_memoryview_slice_assign_scalar(__Pyx_memviewslice *, int, size_t, void *, int); /*proto*/
 static void __pyx_memoryview__slice_assign_scalar(char *, Py_ssize_t *, Py_ssize_t *, int, size_t, void *); /*proto*/
 static __Pyx_TypeInfo __Pyx_TypeInfo_double = { "double", NULL, sizeof(double), { 0 }, 0, 'R', 0, 0 };
-#define __Pyx_MODULE_NAME "py_ymw16"
-int __pyx_module_is_main_py_ymw16 = 0;
+#define __Pyx_MODULE_NAME "MSPDist.py_ymw16"
+int __pyx_module_is_main_MSPDist__py_ymw16 = 0;
 
-/* Implementation of 'py_ymw16' */
+/* Implementation of 'MSPDist.py_ymw16' */
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_RuntimeError;
@@ -2082,8 +2082,8 @@ static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_unpack;
 static PyObject *__pyx_n_s_vbs;
 static PyObject *__pyx_n_s_zeros;
-static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname); /* proto */
-static PyObject *__pyx_pf_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname); /* proto */
+static PyObject *__pyx_pf_7MSPDist_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname); /* proto */
+static PyObject *__pyx_pf_7MSPDist_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __pyx_array_obj *__pyx_v_self, PyObject *__pyx_v_shape, Py_ssize_t __pyx_v_itemsize, PyObject *__pyx_v_format, PyObject *__pyx_v_mode, int __pyx_v_allocate_buffer); /* proto */
@@ -2153,7 +2153,7 @@ static PyObject *__pyx_tuple__25;
 static PyObject *__pyx_tuple__26;
 static PyObject *__pyx_tuple__27;
 
-/* "py_ymw16.pyx":22
+/* "MSPDist/py_ymw16.pyx":22
  * @cython.initializedcheck(False)
  * 
  * cpdef double distance(double l, double b, double DM,             # <<<<<<<<<<<<<<
@@ -2161,8 +2161,8 @@ static PyObject *__pyx_tuple__27;
  *     int ndir=1, int _np=1, int vbs=0,
  */
 
-static PyObject *__pyx_pw_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static double __pyx_f_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_8py_ymw16_distance *__pyx_optional_args) {
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static double __pyx_f_7MSPDist_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_7MSPDist_8py_ymw16_distance *__pyx_optional_args) {
   double __pyx_v_DM_Host = ((double)0.0);
   int __pyx_v_ndir = ((int)1);
   int __pyx_v__np = ((int)1);
@@ -2188,7 +2188,7 @@ static double __pyx_f_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, dou
     }
   }
 
-  /* "py_ymw16.pyx":44
+  /* "MSPDist/py_ymw16.pyx":44
  *     """
  *     # Fix names of directories
  *     cdef char* text = ""             # <<<<<<<<<<<<<<
@@ -2197,7 +2197,7 @@ static double __pyx_f_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, dou
  */
   __pyx_v_text = ((char *)"");
 
-  /* "py_ymw16.pyx":47
+  /* "MSPDist/py_ymw16.pyx":47
  * 
  *     return dmdtau(gl=l, gb=b, dordm=DM, DM_Host=DM_Host,
  *         ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc             # <<<<<<<<<<<<<<
@@ -2207,7 +2207,7 @@ static double __pyx_f_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, dou
   __pyx_r = (dmdtau(__pyx_v_l, __pyx_v_b, __pyx_v_DM, __pyx_v_DM_Host, __pyx_v_ndir, __pyx_v__np, __pyx_v_vbs, __pyx_v_dirname, __pyx_v_text) * 1e-3);
   goto __pyx_L0;
 
-  /* "py_ymw16.pyx":22
+  /* "MSPDist/py_ymw16.pyx":22
  * @cython.initializedcheck(False)
  * 
  * cpdef double distance(double l, double b, double DM,             # <<<<<<<<<<<<<<
@@ -2221,9 +2221,9 @@ static double __pyx_f_8py_ymw16_distance(double __pyx_v_l, double __pyx_v_b, dou
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_8py_ymw16_distance[] = "\n\n    Arguments\n    ---------\n    DM [double/float] : Dispersion measure # in pp/cm^3\n    l [double/float] : longitude (galactic coordinates) [deg]\n    b [double/float] : latitude (galactic coordinates) [deg]\n    DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)\n    ndir : (1) DM to distance, (2) distance to DM\n    _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy\n    vbs : verbose (default is 0)\n    dirname : directory of the ymw16 code input files\n\n    Returns\n    -------\n    Distance in kpc\n    ";
-static PyObject *__pyx_pw_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_7MSPDist_8py_ymw16_distance[] = "\n\n    Arguments\n    ---------\n    DM [double/float] : Dispersion measure # in pp/cm^3\n    l [double/float] : longitude (galactic coordinates) [deg]\n    b [double/float] : latitude (galactic coordinates) [deg]\n    DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)\n    ndir : (1) DM to distance, (2) distance to DM\n    _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy\n    vbs : verbose (default is 0)\n    dirname : directory of the ymw16 code input files\n\n    Returns\n    -------\n    Distance in kpc\n    ";
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   double __pyx_v_l;
   double __pyx_v_b;
   double __pyx_v_DM;
@@ -2344,22 +2344,22 @@ static PyObject *__pyx_pw_8py_ymw16_1distance(PyObject *__pyx_self, PyObject *__
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("distance", 0, 3, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 22, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("py_ymw16.distance", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("MSPDist.py_ymw16.distance", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8py_ymw16_distance(__pyx_self, __pyx_v_l, __pyx_v_b, __pyx_v_DM, __pyx_v_DM_Host, __pyx_v_ndir, __pyx_v__np, __pyx_v_vbs, __pyx_v_dirname);
+  __pyx_r = __pyx_pf_7MSPDist_8py_ymw16_distance(__pyx_self, __pyx_v_l, __pyx_v_b, __pyx_v_DM, __pyx_v_DM_Host, __pyx_v_ndir, __pyx_v__np, __pyx_v_vbs, __pyx_v_dirname);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname) {
+static PyObject *__pyx_pf_7MSPDist_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_l, double __pyx_v_b, double __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   double __pyx_t_1;
-  struct __pyx_opt_args_8py_ymw16_distance __pyx_t_2;
+  struct __pyx_opt_args_7MSPDist_8py_ymw16_distance __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("distance", 0);
   __Pyx_XDECREF(__pyx_r);
@@ -2369,7 +2369,7 @@ static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self,
   __pyx_t_2._np = __pyx_v__np;
   __pyx_t_2.vbs = __pyx_v_vbs;
   __pyx_t_2.dirname = __pyx_v_dirname;
-  __pyx_t_1 = __pyx_f_8py_ymw16_distance(__pyx_v_l, __pyx_v_b, __pyx_v_DM, 0, &__pyx_t_2); 
+  __pyx_t_1 = __pyx_f_7MSPDist_8py_ymw16_distance(__pyx_v_l, __pyx_v_b, __pyx_v_DM, 0, &__pyx_t_2); 
   __pyx_t_3 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = __pyx_t_3;
@@ -2379,7 +2379,7 @@ static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self,
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("py_ymw16.distance", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("MSPDist.py_ymw16.distance", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2387,7 +2387,7 @@ static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self,
   return __pyx_r;
 }
 
-/* "py_ymw16.pyx":49
+/* "MSPDist/py_ymw16.pyx":49
  *         ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
  * 
  * cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,             # <<<<<<<<<<<<<<
@@ -2395,8 +2395,8 @@ static PyObject *__pyx_pf_8py_ymw16_distance(CYTHON_UNUSED PyObject *__pyx_self,
  *   char* dirname="./ymw16_v1.3/"):
  */
 
-static PyObject *__pyx_pw_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_8py_ymw16_distances *__pyx_optional_args) {
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static __Pyx_memviewslice __pyx_f_7MSPDist_8py_ymw16_distances(__Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_7MSPDist_8py_ymw16_distances *__pyx_optional_args) {
   double __pyx_v_DM_Host = ((double)0.0);
   int __pyx_v_ndir = ((int)1);
   int __pyx_v__np = ((int)1);
@@ -2420,7 +2420,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
   Py_ssize_t __pyx_t_11;
   Py_ssize_t __pyx_t_12;
   double __pyx_t_13;
-  struct __pyx_opt_args_8py_ymw16_distance __pyx_t_14;
+  struct __pyx_opt_args_7MSPDist_8py_ymw16_distance __pyx_t_14;
   Py_ssize_t __pyx_t_15;
   __Pyx_RefNannySetupContext("distances", 0);
   if (__pyx_optional_args) {
@@ -2441,7 +2441,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
     }
   }
 
-  /* "py_ymw16.pyx":70
+  /* "MSPDist/py_ymw16.pyx":70
  *   """
  * 
  *   cdef int N = len(l) ; # Number of sources             # <<<<<<<<<<<<<<
@@ -2454,7 +2454,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_N = __pyx_t_2;
 
-  /* "py_ymw16.pyx":71
+  /* "MSPDist/py_ymw16.pyx":71
  * 
  *   cdef int N = len(l) ; # Number of sources
  *   cdef double[:] D = np.zeros(N) ;             # <<<<<<<<<<<<<<
@@ -2521,7 +2521,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "py_ymw16.pyx":74
+  /* "MSPDist/py_ymw16.pyx":74
  *   cdef Py_ssize_t iN ;
  * 
  *   with nogil:             # <<<<<<<<<<<<<<
@@ -2535,7 +2535,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
       #endif
       /*try:*/ {
 
-        /* "py_ymw16.pyx":75
+        /* "MSPDist/py_ymw16.pyx":75
  * 
  *   with nogil:
  *     for iN in range(N):             # <<<<<<<<<<<<<<
@@ -2546,7 +2546,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
         for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_8; __pyx_t_2+=1) {
           __pyx_v_iN = __pyx_t_2;
 
-          /* "py_ymw16.pyx":76
+          /* "MSPDist/py_ymw16.pyx":76
  *   with nogil:
  *     for iN in range(N):
  *       D[iN] = distance(l=l[iN], b=b[iN], DM=DM[iN],             # <<<<<<<<<<<<<<
@@ -2584,7 +2584,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
             __PYX_ERR(0, 76, __pyx_L4_error)
           }
 
-          /* "py_ymw16.pyx":78
+          /* "MSPDist/py_ymw16.pyx":78
  *       D[iN] = distance(l=l[iN], b=b[iN], DM=DM[iN],
  *               DM_Host=DM_Host, ndir=ndir, _np=_np, vbs=vbs,
  *               dirname=dirname) ;             # <<<<<<<<<<<<<<
@@ -2597,9 +2597,9 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
           __pyx_t_14._np = __pyx_v__np;
           __pyx_t_14.vbs = __pyx_v_vbs;
           __pyx_t_14.dirname = __pyx_v_dirname;
-          __pyx_t_13 = __pyx_f_8py_ymw16_distance((*((double *) ( /* dim=0 */ (__pyx_v_l.data + __pyx_t_9 * __pyx_v_l.strides[0]) ))), (*((double *) ( /* dim=0 */ (__pyx_v_b.data + __pyx_t_11 * __pyx_v_b.strides[0]) ))), (*((double *) ( /* dim=0 */ (__pyx_v_DM.data + __pyx_t_12 * __pyx_v_DM.strides[0]) ))), 0, &__pyx_t_14); 
+          __pyx_t_13 = __pyx_f_7MSPDist_8py_ymw16_distance((*((double *) ( /* dim=0 */ (__pyx_v_l.data + __pyx_t_9 * __pyx_v_l.strides[0]) ))), (*((double *) ( /* dim=0 */ (__pyx_v_b.data + __pyx_t_11 * __pyx_v_b.strides[0]) ))), (*((double *) ( /* dim=0 */ (__pyx_v_DM.data + __pyx_t_12 * __pyx_v_DM.strides[0]) ))), 0, &__pyx_t_14); 
 
-          /* "py_ymw16.pyx":76
+          /* "MSPDist/py_ymw16.pyx":76
  *   with nogil:
  *     for iN in range(N):
  *       D[iN] = distance(l=l[iN], b=b[iN], DM=DM[iN],             # <<<<<<<<<<<<<<
@@ -2620,7 +2620,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
         }
       }
 
-      /* "py_ymw16.pyx":74
+      /* "MSPDist/py_ymw16.pyx":74
  *   cdef Py_ssize_t iN ;
  * 
  *   with nogil:             # <<<<<<<<<<<<<<
@@ -2644,7 +2644,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
       }
   }
 
-  /* "py_ymw16.pyx":80
+  /* "MSPDist/py_ymw16.pyx":80
  *               dirname=dirname) ;
  * 
  *   return D             # <<<<<<<<<<<<<<
@@ -2653,7 +2653,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
   __pyx_r = __pyx_v_D;
   goto __pyx_L0;
 
-  /* "py_ymw16.pyx":49
+  /* "MSPDist/py_ymw16.pyx":49
  *         ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
  * 
  * cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,             # <<<<<<<<<<<<<<
@@ -2671,7 +2671,7 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
   __PYX_XDEC_MEMVIEW(&__pyx_t_7, 1);
   __pyx_r.data = NULL;
   __pyx_r.memview = NULL;
-  __Pyx_AddTraceback("py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("MSPDist.py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
 
   goto __pyx_L2;
   __pyx_L0:;
@@ -2685,9 +2685,9 @@ static __Pyx_memviewslice __pyx_f_8py_ymw16_distances(__Pyx_memviewslice __pyx_v
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_8py_ymw16_2distances[] = "\n\n  Arguments\n  ---------\n  DM [array] : Dispersion measure # in pp/cm^3\n  l [array] : longitude (galactic coordinates) [deg]\n  b [array] : latitude (galactic coordinates) [deg]\n  DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)\n  ndir : (1) DM to distance, (2) distance to DM\n  _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy\n  vbs : verbose (default is 0)\n  dirname : directory to the ymw16 code input files\n\n  Returns\n  -------\n  Distances for multiple sources in kpc\n  ";
-static PyObject *__pyx_pw_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_7MSPDist_8py_ymw16_2distances[] = "\n\n  Arguments\n  ---------\n  DM [array] : Dispersion measure # in pp/cm^3\n  l [array] : longitude (galactic coordinates) [deg]\n  b [array] : latitude (galactic coordinates) [deg]\n  DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)\n  ndir : (1) DM to distance, (2) distance to DM\n  _np : (-1) IGM, (0) Magellanic clouds, (1) Galaxy\n  vbs : verbose (default is 0)\n  dirname : directory to the ymw16 code input files\n\n  Returns\n  -------\n  Distances for multiple sources in kpc\n  ";
+static PyObject *__pyx_pw_7MSPDist_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_l = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_memviewslice __pyx_v_b = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_memviewslice __pyx_v_DM = { 0, 0, { 0 }, { 0 }, { 0 } };
@@ -2808,22 +2808,22 @@ static PyObject *__pyx_pw_8py_ymw16_3distances(PyObject *__pyx_self, PyObject *_
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("distances", 0, 3, 8, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 49, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("MSPDist.py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8py_ymw16_2distances(__pyx_self, __pyx_v_l, __pyx_v_b, __pyx_v_DM, __pyx_v_DM_Host, __pyx_v_ndir, __pyx_v__np, __pyx_v_vbs, __pyx_v_dirname);
+  __pyx_r = __pyx_pf_7MSPDist_8py_ymw16_2distances(__pyx_self, __pyx_v_l, __pyx_v_b, __pyx_v_DM, __pyx_v_DM_Host, __pyx_v_ndir, __pyx_v__np, __pyx_v_vbs, __pyx_v_dirname);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname) {
+static PyObject *__pyx_pf_7MSPDist_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_l, __Pyx_memviewslice __pyx_v_b, __Pyx_memviewslice __pyx_v_DM, double __pyx_v_DM_Host, int __pyx_v_ndir, int __pyx_v__np, int __pyx_v_vbs, char *__pyx_v_dirname) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_memviewslice __pyx_t_1 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  struct __pyx_opt_args_8py_ymw16_distances __pyx_t_2;
+  struct __pyx_opt_args_7MSPDist_8py_ymw16_distances __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("distances", 0);
   __Pyx_XDECREF(__pyx_r);
@@ -2836,7 +2836,7 @@ static PyObject *__pyx_pf_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_sel
   __pyx_t_2._np = __pyx_v__np;
   __pyx_t_2.vbs = __pyx_v_vbs;
   __pyx_t_2.dirname = __pyx_v_dirname;
-  __pyx_t_1 = __pyx_f_8py_ymw16_distances(__pyx_v_l, __pyx_v_b, __pyx_v_DM, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_7MSPDist_8py_ymw16_distances(__pyx_v_l, __pyx_v_b, __pyx_v_DM, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 49, __pyx_L1_error)
   __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_t_1, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __PYX_XDEC_MEMVIEW(&__pyx_t_1, 1);
@@ -2850,7 +2850,7 @@ static PyObject *__pyx_pf_8py_ymw16_2distances(CYTHON_UNUSED PyObject *__pyx_sel
   __pyx_L1_error:;
   __PYX_XDEC_MEMVIEW(&__pyx_t_1, 1);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("MSPDist.py_ymw16.distances", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __PYX_XDEC_MEMVIEW(&__pyx_v_l, 1);
@@ -17151,7 +17151,7 @@ static PyBufferProcs __pyx_tp_as_buffer_array = {
 
 static PyTypeObject __pyx_type___pyx_array = {
   PyVarObject_HEAD_INIT(0, 0)
-  "py_ymw16.array", /*tp_name*/
+  "MSPDist.py_ymw16.array", /*tp_name*/
   sizeof(struct __pyx_array_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_array, /*tp_dealloc*/
@@ -17257,7 +17257,7 @@ static PyMethodDef __pyx_methods_Enum[] = {
 
 static PyTypeObject __pyx_type___pyx_MemviewEnum = {
   PyVarObject_HEAD_INIT(0, 0)
-  "py_ymw16.Enum", /*tp_name*/
+  "MSPDist.py_ymw16.Enum", /*tp_name*/
   sizeof(struct __pyx_MemviewEnum_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_Enum, /*tp_dealloc*/
@@ -17505,7 +17505,7 @@ static PyBufferProcs __pyx_tp_as_buffer_memoryview = {
 
 static PyTypeObject __pyx_type___pyx_memoryview = {
   PyVarObject_HEAD_INIT(0, 0)
-  "py_ymw16.memoryview", /*tp_name*/
+  "MSPDist.py_ymw16.memoryview", /*tp_name*/
   sizeof(struct __pyx_memoryview_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_memoryview, /*tp_dealloc*/
@@ -17630,7 +17630,7 @@ static struct PyGetSetDef __pyx_getsets__memoryviewslice[] = {
 
 static PyTypeObject __pyx_type___pyx_memoryviewslice = {
   PyVarObject_HEAD_INIT(0, 0)
-  "py_ymw16._memoryviewslice", /*tp_name*/
+  "MSPDist.py_ymw16._memoryviewslice", /*tp_name*/
   sizeof(struct __pyx_memoryviewslice_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc__memoryviewslice, /*tp_dealloc*/
@@ -17695,8 +17695,8 @@ static PyTypeObject __pyx_type___pyx_memoryviewslice = {
 };
 
 static PyMethodDef __pyx_methods[] = {
-  {"distance", (PyCFunction)__pyx_pw_8py_ymw16_1distance, METH_VARARGS|METH_KEYWORDS, __pyx_doc_8py_ymw16_distance},
-  {"distances", (PyCFunction)__pyx_pw_8py_ymw16_3distances, METH_VARARGS|METH_KEYWORDS, __pyx_doc_8py_ymw16_2distances},
+  {"distance", (PyCFunction)__pyx_pw_7MSPDist_8py_ymw16_1distance, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7MSPDist_8py_ymw16_distance},
+  {"distances", (PyCFunction)__pyx_pw_7MSPDist_8py_ymw16_3distances, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7MSPDist_8py_ymw16_2distances},
   {0, 0, 0, 0}
 };
 
@@ -18204,14 +18204,14 @@ PyMODINIT_FUNC PyInit_py_ymw16(void)
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_py_ymw16) {
+  if (__pyx_module_is_main_MSPDist__py_ymw16) {
     if (PyObject_SetAttrString(__pyx_m, "__name__", __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "py_ymw16")) {
-      if (unlikely(PyDict_SetItemString(modules, "py_ymw16", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "MSPDist.py_ymw16")) {
+      if (unlikely(PyDict_SetItemString(modules, "MSPDist.py_ymw16", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -18278,7 +18278,7 @@ PyMODINIT_FUNC PyInit_py_ymw16(void)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "py_ymw16.pyx":12
+  /* "MSPDist/py_ymw16.pyx":12
  * # ----------------------------------------------------------------------------------------
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
@@ -18290,7 +18290,7 @@ PyMODINIT_FUNC PyInit_py_ymw16(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np_2, __pyx_t_1) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "py_ymw16.pyx":1
+  /* "MSPDist/py_ymw16.pyx":1
  * # ----------------------------------------------------------------------------------------             # <<<<<<<<<<<<<<
  * # py_ymw16.pyx
  * # ----------------------------------------------------------------------------------------
@@ -18450,11 +18450,11 @@ PyMODINIT_FUNC PyInit_py_ymw16(void)
   __Pyx_XDECREF(__pyx_t_1);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init py_ymw16", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init MSPDist.py_ymw16", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_DECREF(__pyx_m); __pyx_m = 0;
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init py_ymw16");
+    PyErr_SetString(PyExc_ImportError, "init MSPDist.py_ymw16");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();

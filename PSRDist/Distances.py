@@ -33,7 +33,7 @@ def ymw16(DM, l, b):
 
     Returns
     -------
-    * Dist [array] : Distance to MSP # in kpc
+    * Dist [array] : Distance to PSR # in kpc
     """
     Dist = ymw.distances(l=l, b=b, DM=DM, dirname=dirname+"/ymw16_v1.3/")
     # Dist = ymw.distances(l=l, b=b, DM=DM)
@@ -56,7 +56,7 @@ def dist_bf(name, DM, l, b):
 
     Returns
     -------
-    Dist [array] : Distance to MSPs # in kpc
+    Dist [array] : Distance to PSRs # in kpc
     """
     # original best fit values
     filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
@@ -98,7 +98,7 @@ def dist_pdf(name, DM, l, b,
     for electron density distribution in the galaxy.
 
     The pdf is calculated by varying the parameters in the ymw16 model
-    and recalculating the distance to the MSP which is the biggest source
+    and recalculating the distance to the PSR which is the biggest source
     of systematics in the distance calculation
 
     Arguments
@@ -119,7 +119,7 @@ def dist_pdf(name, DM, l, b,
 
     Returns
     -------
-    * dist_pdfs [array] : PDFs of the distance to MSPs
+    * dist_pdfs [array] : PDFs of the distance to PSRs
     * dist [array] : distances for each pdf point (if kde) or
                    bin edges (if hist) # [kpc]
     """
@@ -304,7 +304,7 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False):
 
     Returns
     -------
-    * dist_pdfs [array] : PDFs of the distance to MSPs
+    * dist_pdfs [array] : PDFs of the distance to PSRs
     * dist [array] : distances for each pdf point (if kde) or
                    bin edges (if hist) # [kpc]
     """
