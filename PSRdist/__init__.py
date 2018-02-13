@@ -25,5 +25,5 @@ The version of the ymw16 code provided contains some changes compared to the ori
 The original best fit parameters from the ymw16 paper can be found in ymw16par_bestfit.txt.
 """
 
-from PSRDist.Distances import *
+from PSRdist.Distances import *
 import py_ymw16 as ymw
