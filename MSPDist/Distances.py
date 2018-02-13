@@ -287,3 +287,66 @@ def dist_pdf(name, DM, l, b,
         return dist_pdfs, dist, errors
     else:
         return dist_pdfs, dist
+
+def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False):
+    """
+    Arguments
+    ---------
+    * name [array] : List of names of sources for labelling
+    * P [array] : List of names of sources for labelling
+    * P_error [ndarray] : List of names of sources for labelling
+        Shape[i] = (# of sources,) for symmetric
+        Shape[i] = (# of sources, 2) for asymmetric 
+        - [:,0] is the lower error, [:,1] is the upper error
+        Example np.array([[0.1,0.2],0.1,0.1])
+        First element represents asymmetric errors, second
+        and third are symmetric
+
+    Returns
+    -------
+    * dist_pdfs [array] : PDFs of the distance to MSPs
+    * dist [array] : distances for each pdf point (if kde) or
+                   bin edges (if hist) # [kpc]
+    """
+    # Check for symmetric or asymmetric
+    sigma_P = np.zeros([P.size,2])
+    for i in range(P.size):
+        if isinstance(P_errors[i], list):
+            sigma_P[i,:] = P_errors[i,:]
+        else:
+            sigma_P[i,:] = P_errors[i]
+
+    dist_pdfs = []
+    d_list = np.linspace(0.,15.,num=nd)
+    d_width = d_list[1] - d_list[0]
+    d_cen = d_list + d_width/2
+
+    for i in range(P.size):
+        d_hist = np.heaviside(1./d_cen - P[i],0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,1])**2)/2.)/(d_cen**2.) + np.heaviside(P[i] - 1./d_cen,0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,0])**2)/2.)/(d_cen**2.)
+
+        A = sum(d_hist*d_width) # Normalising factor
+        dist_pdfs.append(d_hist/A)
+
+    dist_pdfs = np.array(dist_pdfs)
+        
+    if save_files:
+        for i in range(P.size):
+            np.savetxt(workingdir + "/output/%s_pdf_parallax.dat"%(name[i]), 
+                zip(d_cen[i], dist_pdfs[i]), delimiter=" ")
+        
+    # --> make plots
+    if plots:
+        for i in range(P.size):
+            plt.figure()
+            plt.hist(dist[:,i], bins=nd, normed=True, alpha=0.8)
+            if error:
+                plt.axvline(x=errors[i,0]+errors[i,1], color='r')
+                plt.axvline(x=errors[i,0]-errors[i,1], color='r')
+            plt.plot(_dist, kde_func(_dist))
+            plt.ylabel('N')
+            plt.title('%s'%(str(name[i])))
+            plt.xlabel('D [kpc]')
+            plt.savefig(workingdir + '/plots/%s_%s.pdf'%(name[i], MC_mode))
+            plt.close()
+
+    return dist_pdfs, dist
