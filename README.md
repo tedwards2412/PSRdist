@@ -1,4 +1,4 @@
-# MSPDist
+# PSRDist
 Calculates probability density functions for the distances to Millisecond Pulsars.
 Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.
 
