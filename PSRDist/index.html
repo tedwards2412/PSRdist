@@ -3,8 +3,8 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 
-    <title>MSPDist API documentation</title>
-    <meta name="description" content="# MSPDist
+    <title>PSRDist API documentation</title>
+    <meta name="description" content="# PSRDist
 Calculates probability density functions for the distances to Millisecond Pulsars.
 Code co..." />
 
@@ -1045,8 +1045,8 @@ table {
     <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
       
   <ul>
-    <li class="mono"><a href="#MSPDist.dirname">dirname</a></li>
-    <li class="mono"><a href="#MSPDist.workingdir">workingdir</a></li>
+    <li class="mono"><a href="#PSRDist.dirname">dirname</a></li>
+    <li class="mono"><a href="#PSRDist.workingdir">workingdir</a></li>
   </ul>
 
     </li>
@@ -1055,7 +1055,7 @@ table {
 
     <li class="set"><h3><a href="#header-submodules">Sub-modules</a></h3>
       <ul>
-        <li class="mono"><a href="Distances.m.html">MSPDist.Distances</a></li>
+        <li class="mono"><a href="Distances.m.html">PSRDist.Distances</a></li>
       </ul>
     </li>
     </ul>
@@ -1069,8 +1069,8 @@ table {
 
 
   <header id="section-intro">
-  <h1 class="title"><span class="name">MSPDist</span> module</h1>
-  <h1>MSPDist</h1>
+  <h1 class="title"><span class="name">PSRDist</span> module</h1>
+  <h1>PSRDist</h1>
 <p>Calculates probability density functions for the distances to Millisecond Pulsars.
 Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.</p>
 <h2>Requirements and installation</h2>
@@ -1093,9 +1093,9 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 - ymw16par.txt</p>
 <p>The original best fit parameters from the ymw16 paper can be found in ymw16par_bestfit.txt.</p>
   
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-MSPDist', this);">Show source &equiv;</a></p>
-  <div id="source-MSPDist" class="source">
-    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;# MSPDist</span>
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRDist', this);">Show source &equiv;</a></p>
+  <div id="source-PSRDist" class="source">
+    <div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;# PSRDist</span>
 <span class="sd">Calculates probability density functions for the distances to Millisecond Pulsars.</span>
 <span class="sd">Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.</span>
 
@@ -1122,7 +1122,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 <span class="sd">The original best fit parameters from the ymw16 paper can be found in ymw16par_bestfit.txt.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">MSPDist.Distances</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">PSRDist.Distances</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">py_ymw16</span> <span class="kn">as</span> <span class="nn">ymw</span>
 </pre></div>
 
@@ -1133,7 +1133,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
   <section id="section-items">
     <h2 class="section-title" id="header-variables">Module variables</h2>
       <div class="item">
-      <p id="MSPDist.dirname" class="name">var <span class="ident">dirname</span></p>
+      <p id="PSRDist.dirname" class="name">var <span class="ident">dirname</span></p>
       
   
   <div class="source_cont">
@@ -1141,7 +1141,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 
       </div>
       <div class="item">
-      <p id="MSPDist.workingdir" class="name">var <span class="ident">workingdir</span></p>
+      <p id="PSRDist.workingdir" class="name">var <span class="ident">workingdir</span></p>
       
   
   <div class="source_cont">
@@ -1153,7 +1153,7 @@ of distances to each MSP. We then create a pdf through a normalised histogram of
 
     <h2 class="section-title" id="header-submodules">Sub-modules</h2>
       <div class="item">
-      <p class="name"><a href="Distances.m.html">MSPDist.Distances</a></p>
+      <p class="name"><a href="Distances.m.html">PSRDist.Distances</a></p>
       
   
 
