@@ -11,7 +11,6 @@ import tempfile
 # Get directory name
 dirname = os.path.dirname(os.path.realpath(__file__))
 workingdir = os.getcwd()
-print workingdir
 
 def ymw16(DM, l, b):
     """
@@ -312,7 +311,7 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False):
     sigma_P = np.zeros([P.size,2])
     for i in range(P.size):
         if isinstance(P_errors[i], list):
-            sigma_P[i,:] = P_errors[i,:]
+            sigma_P[i,:] = P_errors[i]
         else:
             sigma_P[i,:] = P_errors[i]
 
@@ -331,22 +330,18 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False):
         
     if save_files:
         for i in range(P.size):
-            np.savetxt(workingdir + "/output/%s_pdf_parallax.dat"%(name[i]), 
-                zip(d_cen[i], dist_pdfs[i]), delimiter=" ")
+            np.savetxt(dirname + "/../output/%s_pdf_parallax.dat"%(name[i]), 
+                zip(d_cen, dist_pdfs[i]), delimiter=" ")
         
     # --> make plots
     if plots:
         for i in range(P.size):
             plt.figure()
-            plt.hist(dist[:,i], bins=nd, normed=True, alpha=0.8)
-            if error:
-                plt.axvline(x=errors[i,0]+errors[i,1], color='r')
-                plt.axvline(x=errors[i,0]-errors[i,1], color='r')
-            plt.plot(_dist, kde_func(_dist))
+            plt.plot(d_cen, dist_pdfs[i])
             plt.ylabel('N')
             plt.title('%s'%(str(name[i])))
             plt.xlabel('D [kpc]')
-            plt.savefig(workingdir + '/plots/%s_%s.pdf'%(name[i], MC_mode))
+            plt.savefig(dirname + '/../plots/%s_parallax.pdf'%(name[i]))
             plt.close()
 
-    return dist_pdfs, dist
+    return dist_pdfs, d_cen
