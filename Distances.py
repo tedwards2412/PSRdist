@@ -83,10 +83,9 @@ def dist_bf(name, DM, l, b):
 
 # def dist_pdf(name, DM, l, b, n_dbins,
 def dist_pdf(name, DM, l, b,
-    mode="kde",
+    mode="kde", nd=100,
     MC_mode = "bestfit", n_MC=1000,
-    save_files=False, plots=False,
-    nd=100):
+    save_files=False, plots=False, outdir='output'):
     """
     Calcultes the distance to a source using the provided
     despersion measure. This function assumes the ymw16 model
@@ -254,17 +253,14 @@ def dist_pdf(name, DM, l, b,
     # --> save files
     if save_files:
         for i in range(DM.size):
-            # np.savetxt("output/%s_%s.dat"%(name[i], tag),
-            #     zip(dist_pdfs[i][0], dist_pdfs[i][1]),
-            #         delimiter=" ")
             if mode=="kde":
-                np.savetxt("output/%s_pdf_%s_%s.dat"%(name[i], mode, MC_mode),
+                np.savetxt("%s/%s_pdf_%s_%s.dat"%(outdir, name[i], mode, MC_mode),
                     zip(dist[i], dist_pdfs[i]), delimiter=" ")
 
             elif mode=="hist":
-                np.savetxt("output/%s_pdf_%s_%s.dat"%(name[i], mode, MC_mode),
+                np.savetxt("%s/%s_pdf_%s_%s.dat"%(outdir, name[i], mode, MC_mode),
                     dist_pdfs[i], delimiter=" ")
-                np.savetxt("output/%s_Dedges_%s.dat"%(name[i], mode, MC_mode),
+                np.savetxt("%s/%s_Dedges_%s_%s.dat"%(outdir, name[i], mode, MC_mode),
                     dist[i], delimiter=" ")
 
     return dist_pdfs, dist
