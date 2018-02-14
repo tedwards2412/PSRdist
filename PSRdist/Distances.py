@@ -5,9 +5,12 @@ import matplotlib.pyplot as plt
 import py_ymw16 as ymw
 from scipy import stats
 import os
+import scipy.optimize as so
+import tempfile
 
 # Get directory name
 dirname = os.path.dirname(os.path.realpath(__file__))
+workingdir = os.getcwd()
 
 def ymw16(DM, l, b):
     """
@@ -23,13 +26,13 @@ def ymw16(DM, l, b):
 
     Arguments
     ---------
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
 
     Returns
     -------
-    Dist [array] : Distance to MSP # in kpc
+    * Dist [array] : Distance to PSR # in kpc
     """
     Dist = ymw.distances(l=l, b=b, DM=DM, dirname=dirname+"/ymw16_v1.3/")
     # Dist = ymw.distances(l=l, b=b, DM=DM)
@@ -45,14 +48,14 @@ def dist_bf(name, DM, l, b):
 
     Arguments
     ---------
-    name [array] : List of names of sources for labelling
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
+    * name [array] : List of names of sources for labelling
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
 
     Returns
     -------
-    Dist [array] : Distance to MSPs # in kpc
+    Dist [array] : Distance to PSRs # in kpc
     """
     # original best fit values
     filename_bf = dirname + '/ymw16_v1.3/ymw16par_bestfit.txt'
@@ -85,36 +88,37 @@ def dist_bf(name, DM, l, b):
 def dist_pdf(name, DM, l, b,
     mode="kde", nd=100,
     MC_mode = "bestfit", n_MC=1000,
-    save_files=False, plots=False, outdir='output'):
+    save_files=False, plots=False, error=False,
+    outdir=dirname):
     """
     Calcultes the distance to a source using the provided
     despersion measure. This function assumes the ymw16 model
     for electron density distribution in the galaxy.
 
     The pdf is calculated by varying the parameters in the ymw16 model
-    and recalculating the distance to the MSP which is the biggest source
+    and recalculating the distance to the PSR which is the biggest source
     of systematics in the distance calculation
 
     Arguments
     ---------
-    name [array] : List of names of sources for labelling
-    DM [array] : Dispersion measure # in pp/cm^3
-    l [array] : longitude (galactic coordinates)
-    b [array] : latitude (galactic coordinates)
-    n_MC [float] : number of monte carlo samples
-    mode [str] : return PDF from kernel density estimator (kde) or
+    * name [array] : List of names of sources for labelling
+    * DM [array] : Dispersion measure # in pp/cm^3
+    * l [array] : longitude (galactic coordinates)
+    * b [array] : latitude (galactic coordinates)
+    * n_MC [float] : number of monte carlo samples
+    * mode [str] : return PDF from kernel density estimator (kde) or
                  as a hisgogram (hist).
-    nd [int] : number of distance values (kde) or bins (hist)
+    * nd [int] : number of distance values (kde) or bins (hist)
 
     Keyword arguments:
-    MC_mode -- bestfit, uniform, gaussian# (# = error in %)
-    save_files -- saves pdfs as txt files (default False)
-    plots -- pdf plots for each pulsar (default False)
+    * MC_mode -- bestfit, uniform, gaussian# (# = error in %)
+    * save_files -- saves pdfs as txt files (default False)
+    * plots -- pdf plots for each pulsar (default False)
 
     Returns
     -------
-    dist_pdfs [array] : PDFs of the distance to MSPs
-    dist [array] : distances for each pdf point (if kde) or
+    * dist_pdfs [array] : PDFs of the distance to PSRs
+    * dist [array] : distances for each pdf point (if kde) or
                    bin edges (if hist) # [kpc]
     """
     # original best fit values
@@ -233,21 +237,34 @@ def dist_pdf(name, DM, l, b,
     dist_pdfs = np.array(dist_pdfs)
     dist = np.array(dist)
 
+    if error:
+        errors = []
+        def confidence_interval(x, pdf, xbins, pdf_peak, confidence_level):
+            binwidth = np.diff(xbins)[0]
+            return (pdf[np.logical_and(xbins < pdf_peak + x, xbins > pdf_peak - x)]*binwidth).sum() - confidence_level
+        for i in range(DM.size):
+            pdf_peak = dist[i,np.argmax(dist_pdfs[i,:])]
+            one_sigma = so.brentq(confidence_interval, 0., 10., args=(dist_pdfs[i,:], dist[i,:], pdf_peak, 0.68))
+            errors.append([pdf_peak,one_sigma])
+    errors = np.array(errors)
+
     # --> make plots
     if plots:
         for i in range(DM.size):
-
             kde_func = stats.gaussian_kde(D_list[:,i])
             _dist = np.linspace(max(D_list[:,i].min()/1.2, 0),
                 D_list[:,i].max()*1.2, nd)
 
             plt.figure()
             plt.hist(D_list[:,i], bins=nd, normed=True, alpha=0.8)
+            if error:
+                plt.axvline(x=errors[i,0]+errors[i,1], color='r')
+                plt.axvline(x=errors[i,0]-errors[i,1], color='r')
             plt.plot(_dist, kde_func(_dist))
             plt.ylabel('N')
             plt.title('%s'%(str(name[i])))
             plt.xlabel('D [kpc]')
-            plt.savefig('plots/%s_%s.pdf'%(name[i], MC_mode))
+            plt.savefig(workingdir + '/plots/%s_%s.pdf'%(name[i], MC_mode))
             plt.close()
 
     # --> save files
@@ -263,4 +280,68 @@ def dist_pdf(name, DM, l, b,
                 np.savetxt("%s/%s_Dedges_%s_%s.dat"%(outdir, name[i], mode, MC_mode),
                     dist[i], delimiter=" ")
 
-    return dist_pdfs, dist
+
+    if error:
+        return dist_pdfs, dist, errors
+    else:
+        return dist_pdfs, dist
+
+def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
+    outdir=dirname):
+    """
+    Arguments
+    ---------
+    * name [array] : List of names of sources for labelling
+    * P [array] : List of names of sources for labelling
+    * P_error [ndarray] : List of names of sources for labelling
+        Shape[i] = (# of sources,) for symmetric
+        Shape[i] = (# of sources, 2) for asymmetric
+        - [:,0] is the lower error, [:,1] is the upper error
+        Example np.array([[0.1,0.2],0.1,0.1])
+        First element represents asymmetric errors, second
+        and third are symmetric
+
+    Returns
+    -------
+    * dist_pdfs [array] : PDFs of the distance to PSRs
+    * dist [array] : distances for each pdf point (if kde) or
+                   bin edges (if hist) # [kpc]
+    """
+    # Check for symmetric or asymmetric
+    sigma_P = np.zeros([P.size,2])
+    for i in range(P.size):
+        if isinstance(P_errors[i], list):
+            sigma_P[i,:] = P_errors[i]
+        else:
+            sigma_P[i,:] = P_errors[i]
+
+    dist_pdfs = []
+    d_list = np.linspace(0.,15.,num=nd)
+    d_width = d_list[1] - d_list[0]
+    d_cen = d_list + d_width/2
+
+    for i in range(P.size):
+        d_hist = np.heaviside(1./d_cen - P[i],0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,1])**2)/2.)/(d_cen**2.) + np.heaviside(P[i] - 1./d_cen,0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,0])**2)/2.)/(d_cen**2.)
+
+        A = sum(d_hist*d_width) # Normalising factor
+        dist_pdfs.append(d_hist/A)
+
+    dist_pdfs = np.array(dist_pdfs)
+
+    if save_files:
+        for i in range(P.size):
+            np.savetxt("%s/%s_pdf_parallax.dat"%(outdir, name[i]),
+                zip(d_cen, dist_pdfs[i]), delimiter=" ")
+
+    # --> make plots
+    if plots:
+        for i in range(P.size):
+            plt.figure()
+            plt.plot(d_cen, dist_pdfs[i])
+            plt.ylabel('N')
+            plt.title('%s'%(str(name[i])))
+            plt.xlabel('D [kpc]')
+            plt.savefig(dirname + '/../plots/%s_parallax.pdf'%(name[i]))
+            plt.close()
+
+    return dist_pdfs, d_cen
