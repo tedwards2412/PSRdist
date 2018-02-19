@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import py_ymw16 as ymw
 from scipy import stats
+from scipy.integrate import simps
 import os
 import scipy.optimize as so
 import tempfile
@@ -15,7 +16,7 @@ workingdir = os.getcwd()
 def ymw16(DM, l, b):
     """
     Calcultes the distance to a source using the provided
-    despersion measure. This function assumes the ymw16 model
+    dispersion measure. This function assumes the ymw16 model
     for electron density distribution in the galaxy.
 
     Requires an installed version of the ymw16 model in the local
@@ -42,7 +43,7 @@ def ymw16(DM, l, b):
 def dist_bf(name, DM, l, b):
     """
     Calcultes the distance to a source using the provided
-    despersion measure. This function assumes the ymw16 model
+    dispersion measure. This function assumes the ymw16 model
     for electron density distribution in the galaxy with their best-fit
     parameters.
 
@@ -92,7 +93,7 @@ def dist_pdf(name, DM, l, b,
     outdir=dirname):
     """
     Calcultes the distance to a source using the provided
-    despersion measure. This function assumes the ymw16 model
+    dispersion measure. This function assumes the ymw16 model
     for electron density distribution in the galaxy.
 
     The pdf is calculated by varying the parameters in the ymw16 model
@@ -316,32 +317,49 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
             sigma_P[i,:] = P_errors[i]
 
     dist_pdfs = []
-    d_list = np.linspace(0.,15.,num=nd)
-    d_width = d_list[1] - d_list[0]
-    d_cen = d_list + d_width/2
+    dist_list = []
+    # d_list = np.linspace(0.,15.,num=nd)
+    # d_width = d_list[1] - d_list[0]
+    # d_cen = d_list + d_width/2
 
     for i in range(P.size):
-        d_hist = np.heaviside(1./d_cen - P[i],0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,1])**2)/2.)/(d_cen**2.) + np.heaviside(P[i] - 1./d_cen,0.5)*np.exp(-(((P[i] - 1/d_cen)/sigma_P[i,0])**2)/2.)/(d_cen**2.)
+        # print np.where(P[i]-3*sigma_P[i,0]>0, P[i]+3*sigma_P[i,0], 0.001)
+        # d_list = np.linspace(np.where(P[i]-3*sigma_P[i,0]>0, P[i]-3*sigma_P[i,0], 0.001),
+        #     1./(P[i]+3*sigma_P[i,1]), num=nd)
+        d_list = np.linspace(1./(P[i]+3*sigma_P[i,1]),
+            np.where(P[i]-3*sigma_P[i,0]>0, 1./(P[i]-3*sigma_P[i,0]), 15.),
+            num=nd)
 
-        A = sum(d_hist*d_width) # Normalising factor
-        dist_pdfs.append(d_hist/A)
+
+        d_pdf = (np.heaviside(1./d_list - P[i],0.5) *
+            np.exp(-(((P[i] - 1/d_list)/sigma_P[i,1])**2)/2.) / (d_list**2.) +
+            np.heaviside(P[i] - 1./d_list , 0.5) *
+            np.exp(-(((P[i] - 1/d_list)/sigma_P[i,0])**2)/2.) / (d_list**2.))
+
+        # A = sum(d_hist*d_width) # Normalising factor
+        d_pdf /= simps(d_pdf, d_list)
+        # print name[i], d_list.min(), d_list.max(), d_pdf.max()
+        dist_list.append(d_list)
+        dist_pdfs.append(d_pdf)
 
     dist_pdfs = np.array(dist_pdfs)
+    dist_list = np.array(dist_list)
 
+    # print dist_pdfs.shape
     if save_files:
         for i in range(P.size):
             np.savetxt("%s/%s_pdf_parallax.dat"%(outdir, name[i]),
-                zip(d_cen, dist_pdfs[i]), delimiter=" ")
+                zip(dist_list[i], dist_pdfs[i]), delimiter=" ")
 
     # --> make plots
     if plots:
         for i in range(P.size):
             plt.figure()
-            plt.plot(d_cen, dist_pdfs[i])
+            plt.plot(dist_list[i], dist_pdfs[i])
             plt.ylabel('N')
             plt.title('%s'%(str(name[i])))
             plt.xlabel('D [kpc]')
             plt.savefig(dirname + '/../plots/%s_parallax.pdf'%(name[i]))
             plt.close()
 
-    return dist_pdfs, d_cen
+    return dist_pdfs, dist_list
