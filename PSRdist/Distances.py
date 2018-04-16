@@ -247,7 +247,7 @@ def dist_pdf(name, DM, l, b,
             pdf_peak = dist[i,np.argmax(dist_pdfs[i,:])]
             one_sigma = so.brentq(confidence_interval, 0., 10., args=(dist_pdfs[i,:], dist[i,:], pdf_peak, 0.68))
             errors.append([pdf_peak,one_sigma])
-    errors = np.array(errors)
+        errors = np.array(errors)
 
     # --> make plots
     if plots:
@@ -257,7 +257,7 @@ def dist_pdf(name, DM, l, b,
                 D_list[:,i].max()*1.2, nd)
 
             plt.figure()
-            plt.hist(D_list[:,i], bins=nd, normed=True, alpha=0.8)
+            plt.hist(D_list[:,i], bins=nd, density=True, alpha=0.8)
             if error:
                 plt.axvline(x=errors[i,0]+errors[i,1], color='r')
                 plt.axvline(x=errors[i,0]-errors[i,1], color='r')
@@ -265,7 +265,7 @@ def dist_pdf(name, DM, l, b,
             plt.ylabel('N')
             plt.title('%s'%(str(name[i])))
             plt.xlabel('D [kpc]')
-            plt.savefig(workingdir + '/plots/%s_%s.pdf'%(name[i], MC_mode))
+            plt.savefig(dirname + '/../plots/%s_%s.pdf'%(name[i], MC_mode))
             plt.close()
 
     # --> save files
@@ -359,6 +359,7 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
             plt.ylabel('N')
             plt.title('%s'%(str(name[i])))
             plt.xlabel('D [kpc]')
+            # plt.savefig(dirname + '/../plots/%s_parallax.pdf'%(name[i]))
             plt.savefig(dirname + '/../plots/%s_parallax.pdf'%(name[i]))
             plt.close()
 
