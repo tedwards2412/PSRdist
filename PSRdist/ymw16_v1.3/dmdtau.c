@@ -14,7 +14,7 @@ option) any later version.
 YMW16 is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License,
-available at http://www.gnu.org/licenses/, for more details. 
+available at http://www.gnu.org/licenses/, for more details.
 
 Please report any issues or bugs at
 https://bitbucket.org/psrsoft/ymw16/issues/new/ or directly to the
@@ -57,14 +57,14 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
   double tau_MC_sc=0;
   double R_g=0;
   double gd=0;
- 
+
  //The localtion of Sun relative to GP and Warp
   double z_warp, zz_w, R_warp, theta_warp, theta_max;
   R_warp=8400;//pc
   theta_max=0.0; //In +x direction
 
   int WGN=0;
-  int WLB=0; 
+  int WLB=0;
   int WLI=0;
   int WFB=0;
   int nk, uu, nn;
@@ -79,8 +79,8 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
   struct Thick t1;
   struct Thin t2;
   struct Spiral t3;
-  struct GC t4; 
-  struct Gum t5; 
+  struct GC t4;
+  struct Gum t5;
   struct LB t6;
   struct LI t7;
   struct FB t8;
@@ -92,7 +92,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
   m_5=0;
   m_6=0;
   m_7=0;
-  
+
   ymw16par(&t0, &t1, &t2, &t3, &t4, &t5, &t6, &t7, &t8, &t9, &t10, &t11, dirname);
 
   glr=gl/RAD;
@@ -100,9 +100,9 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
   sl=sin(glr);
   sb=sin(gbr);
   cl=cos(glr);
-  cb=cos(gbr);    
+  cb=cos(gbr);
   dstep=5.0;
-  
+
   if(np==-1){                 // FRBs
     if(ndir==1)uu=0;//dm---dist
     else uu=1;//dist---dm
@@ -111,11 +111,11 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
     dordm=100000;
     nk=20000;
   }
-  
+
   if(np==0){                 // Magellanic Cloud
     nk=20000;
   }
- 
+
   if(np==1){                  //Galactic pulsars
     nk=5000;
   }
@@ -137,9 +137,9 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
     if(vbs>=1){
       printf("\ndtest=%lf, nstep=%lf, dstep=%lf\n", dtest, nstep, dstep);
     }
-  } 
-  
-  
+  }
+
+
   dd=-0.5*dstep;
   ncount=0;
 
@@ -154,10 +154,10 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
     yy=R0*1000-r*cl;
     zz=dd*sb+t0.z_Sun;
     rr=sqrt(xx*xx+yy*yy);
-    
+
     /* Definition of warp */
     if(rr<R_warp){
-      zz_w=zz; 
+      zz_w=zz;
     }else{
       theta_warp=atan2(yy,xx);
       z_warp=t0.Gamma_w*(rr-R_warp)*cos(theta_warp-theta_max);
@@ -172,7 +172,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
     R_g=sqrt(xx*xx+yy*yy+zz*zz);
 
     /* DM to Distance */
-    
+
     if(ndir==1){
       if(dmm<=dm){
         if(R_g<=35000){
@@ -192,9 +192,9 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
             if(w_lmc>=1||w_smc>=1) dstep=5;
             lmc(glr,gbr,dd,&w_lmc,&ne8,t9);
             dora(glr,gbr,dd,&ne9,t10);
-            smc(xx, yy, zz,&w_smc, &ne10, t11);	
+            smc(xx, yy, zz,&w_smc, &ne10, t11);
           }
-	} 
+	}
 	if(WFB==1){
 	  ne1=t8.J_FB*ne1;
 	}
@@ -219,7 +219,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	  WLI=1;
 	}else{
 	  WLI=0;
-	}        
+	}
 	if(ne5>ne0){     /* Gum Nebula */
 	  WGN=1;
 	}else{
@@ -245,9 +245,9 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	    tau_Gal=0.5*tsc(dmm);
 	    printf(" DM_Gal:%8.2f",DM_Gal);
 	    umc++;
-	  } 
+	  }
 	}
-	if(i==nk){ 
+	if(i==nk){
 	  dist+=0.5*dstep;
 	  if(dist>100000)dist=100000;
 	  if(np==0){
@@ -255,10 +255,10 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	    tau_MC=0.5*tsc(DM_MC);
 	    tau_MC_sc=MAX(tau_Gal, tau_MC);
 	    printf(" DM_MC:%8.2f",DM_MC);
-	  }   
+	  }
 	  if(np==0&&vbs!=0)printf(" Dist:%9.1f log(tau_sc):%7.3f %s\n",dist, log10(tau_MC_sc),text);
 	  if(np==1&&vbs!=0)printf(" DM_Gal:%8.2f Dist:%9.1f log(tau_sc):%7.3f %s\n", dmm, dist,log10(tau_sc),text);
-	}	    
+	}
         if(vbs>=2){
 	  printf("dmm=%lf\n", dmm);
 	}
@@ -268,7 +268,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	if(np==0){
 	  DM_MC=dm-DM_Gal;
           if(DM_Gal==0){
-            DM_MC=0; 
+            DM_MC=0;
             DM_Gal=dm;
             tau_MC_sc=tsc(dm);
             printf(" DM_Gal:%8.2f ", DM_Gal);
@@ -276,7 +276,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
           else{
 	    tau_MC=0.5*tsc(DM_MC);
             tau_MC_sc=MAX(tau_MC, tau_Gal);
-          }  
+          }
           printf(" DM_MC:%8.2f", DM_MC);
         }
 	if(np==0&&vbs!=0)printf(" Dist:%9.1f log(tau_sc):%7.3f %s\n",dist,log10(tau_MC_sc),text);
@@ -286,7 +286,7 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
     }
 
     /* Distance to DM */
-    
+
     if(ndir==2){
       if(dd<=dtest){
         if(R_g<=35000){
@@ -307,8 +307,8 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	    lmc(glr,gbr,dd,&w_lmc,&ne8,t9);
 	    dora(glr,gbr,dd,&ne9,t10);
 	    smc(xx, yy, zz,&w_smc, &ne10, t11);
-	  } 
-	}       
+	  }
+	}
 	if(WFB==1){
 	  ne1=t8.J_FB*ne1;
 	}
@@ -333,15 +333,15 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	  WLI=1;
         }else{
           WLI=0;
-        }        
+        }
         if(ne5>ne0){     /* Gum Nebula */
           WGN=1;
         }else{
           WGN=0;
-        }        
+        }
 	/*  Galactic ne */
         ne=(1-WLB)*((1-WGN)*((1-WLI)*(ne0+ne4+ne8+ne9+ne10)+WLI*ne7)+WGN*ne5)+WLB*ne6;
-	
+
 	if(vbs>=2){
           printf("ne=%lf, ne1=%lf, ne2=%lf, ne3=%lf, ne4=%lf, ne5=%lf, ne6=%lf, ne7=%lf, ne8=%lf, ne9=%lf, ne10=%lf\n", ne, ne1, ne2, ne3, ne4, ne5, ne6, ne7, ne8, ne9, ne10);
         }
@@ -349,13 +349,13 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	if(dmstep<=0.000001)dmstep=0;
 	dm+=dmstep;
 	if(np!=1&&umc==1){
-	  if(R_g>35000){ 
+	  if(R_g>35000){
 	    DM_Gal=dm;
 	    tau_Gal=0.5*tsc(dm);
 	    printf(" DM_Gal:%8.2f",dm);
 	    umc++;
-	  } 
-        }  
+	  }
+        }
         if(i==nk&&np!=-1){
           dmpsr=dm;
           if(np==0){
@@ -368,30 +368,30 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
           if(np==0&&vbs!=0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr,log10(tau_MC_sc),text);
           if(np==1&&vbs!=0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
         }
-	
+
 	if(i==nk&&np==-1){
           if(dordm==100000){
 	    DM_MC=dm-DM_Gal;
 	    printf(" DM_MC:%8.2f",DM_MC);
-	  } 
+	  }
           frb_d(DDM, DM_Gal, DM_MC, DM_Host, uu, vbs, text);
           break;
         }
       }
       else{
 	dmpsr=dm+(dmstep*(dtest-(dd-0.5*dstep)))/dstep;
-	if(np==0){ 	
+	if(np==0){
 	  DM_MC=dmpsr-DM_Gal;
 	  if(DM_Gal==0){
 	    DM_MC=0;
 	    DM_Gal=dmpsr;
 	    tau_MC_sc=tsc(dmpsr);
 	    printf(" DM_Gal:%8.2f", DM_Gal);
-	  } 
+	  }
 	  else{
 	    tau_MC=0.5*tsc(DM_MC);
 	    tau_MC_sc=MAX(tau_Gal, tau_MC);
-	  } 
+	  }
 	  printf(" DM_MC:%8.2f", DM_MC);
 	}
 	tau_sc=tsc(dmpsr);
@@ -399,7 +399,13 @@ double dmdtau(double gl, double gb ,double dordm, double DM_Host, int ndir, int 
 	if(np==1&&vbs!=0)printf(" DM:%8.2f log(tau_sc):%7.3f %s\n", dmpsr, log10(tau_sc),text);
 	break;
       }
-    }    
+    }
   }
-  return dist ; // RTB: return dist as a double
+  if(ndir==1){
+    return dist ;
+    }
+  if(ndir==2){
+    return dm ;
+    }
+  // return dist ; // RTB: return dist as a double
 }

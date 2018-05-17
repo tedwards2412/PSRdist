@@ -27,7 +27,7 @@ cpdef double distance(double l, double b, double DM,
 
     Arguments
     ---------
-    DM [double/float] : Dispersion measure # in pp/cm^3
+    DM [double/float] : Dispersion measure [pp/cm^3] or Distance in [pc]
     l [double/float] : longitude (galactic coordinates) [deg]
     b [double/float] : latitude (galactic coordinates) [deg]
     DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)
@@ -43,8 +43,13 @@ cpdef double distance(double l, double b, double DM,
     # Fix names of directories
     cdef char* text = ""
 
-    return dmdtau(gl=l, gb=b, dordm=DM, DM_Host=DM_Host,
-        ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
+    if ndir==1:
+      return dmdtau(gl=l, gb=b, dordm=DM, DM_Host=DM_Host,
+          ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) * 1e-3 # convert pc to kpc
+
+    elif ndir==2:
+      return dmdtau(gl=l, gb=b, dordm=DM, DM_Host=DM_Host,
+          ndir=ndir, np=_np, vbs=vbs, dirname=dirname, text=text) # cm-3 pc
 
 cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
   double DM_Host=0, int ndir=1, int _np=1, int vbs=0,
@@ -53,7 +58,7 @@ cpdef double[:] distances(double[:] l, double[:] b, double[:] DM,
 
   Arguments
   ---------
-  DM [array] : Dispersion measure # in pp/cm^3
+  DM [array] : Dispersion measure [pp/cm^3] or Distances [pc]
   l [array] : longitude (galactic coordinates) [deg]
   b [array] : latitude (galactic coordinates) [deg]
   DM_Host : Contribution of Fast-radio burst host galaxy to the observed DM (only used for IGM mode)
