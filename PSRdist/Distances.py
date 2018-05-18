@@ -520,7 +520,7 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
 
     Returns
     -------
-    * dist_pdfs [array] : PDFs of the distance to PSRs
+    * dist_pdfs [array] : PDFs of the true distance to PSRs given a measurement of w
     * dist [array] : distances for each pdf point (if kde) or
                    bin edges (if hist) # [kpc]
     """
@@ -580,3 +580,27 @@ def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
             plt.close()
 
     return dist_pdfs, dist_list
+
+def px_pdf(name, px, dist, sigma_px):
+    """
+    Arguments
+    ---------
+    * name [array] : List of names of sources for labelling
+    * px [float] : observed parallax [mas]
+    * dist [array] : True distance to a source [kpc]
+    * sigma_px [array] : Error on parallax [mas]
+
+    Returns
+    -------
+    * px_pdf [array] : PDFs of the measured parallax to PSRs given a true distance Dt (not correctly normalized!)
+    * dist [array] : distances for each pdf point (if kde) or
+                   bin edges (if hist) # [kpc]
+    """
+    # Check for symmetric or asymmetric
+
+    px_pdf = (np.heaviside(px - 1./dist,0.5) *
+        np.exp(-(((px - 1/dist)/sigma_px[1])**2)/2.) +
+        np.heaviside(1./dist - px, 0.5) *
+        np.exp(-(((px - 1/dist)/sigma_px[0])**2)/2.)) # P(w_meas|w(D))
+
+    return px_pdf, dist
