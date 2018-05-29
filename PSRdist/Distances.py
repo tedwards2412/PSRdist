@@ -15,6 +15,7 @@ import time
 # Get directory name
 dirname = os.path.dirname(os.path.realpath(__file__))
 workingdir = os.getcwd()
+
 # ------------------------------------------------------------------------------
 # H E L P E R  F U N C T I O N S
 # ------------------------------------------------------------------------------
@@ -311,15 +312,13 @@ def dist_pdf(name, DM, l, b,
         return dist_pdfs, dist
 
 def DM_pdf(name,
-    # dist,
     l, b,
     d_bf, sigma_d=None,
-    mode="kde",
+    # mode="hist",
     MC_mode = "bestfit", n_MC=1000,
     outdir=dirname,
     nd=100, ndm=50,
     equal_d_spacing=True):
-    # dist_edges=None, DM_edges=None):
     """
     Calcultes the distance to a source using the provided
     dispersion measure. This function assumes the ymw16 model
@@ -332,15 +331,10 @@ def DM_pdf(name,
     Arguments
     ---------
     * name [array] : List of names of sources for labelling
-    * dist [array] : distance # in [kpcs]
     * l [array] : longitude (galactic coordinates)
     * b [array] : latitude (galactic coordinates)
-    * ndir : (1) DM to distance, (2) distance to DM
+    * d_bf [array]: best fit distance 
     * n_MC [float] : number of monte carlo samples
-    * mode [str] : return PDF from kernel density estimator (kde) or
-                 as a hisgogram (hist).
-    * nd [int] : number of distance values (kde) or bins (hist)
-    * nd [int] : number of DM values (kde) or bins (hist)
 
     Keyword arguments:
     * MC_mode -- bestfit, uniform, gaussian# (# = error in %)
@@ -349,11 +343,11 @@ def DM_pdf(name,
 
     Returns
     -------
-    * dist_pdfs [array] : PDFs of the distance to PSRs
-    * dist [array] : distances for each pdf point (if kde) or
-                   bin edges (if hist) # [kpc]
+    * P(DM|D) [array] : 2-D Histogram where $\int dDM P(DM|D) = 1$
+    * dist_edges [array] : bin edges # [kpc]
+    * DM_edges [array] : bin edges # [pc]
     """
-
+    mode = "hist"
     # Set up distance: we draw distance assuming a lognormal around the best-fit
     if sigma_d == None:
         sigma_d = np.log(2)/2. # Meaning that a value that is at 2xd_bf is 2 sigma away
@@ -461,6 +455,7 @@ def DM_pdf(name,
             f.write('Ele_arm %.6f %.6f %.6f %.6f %.6f\n'%tuple(val_narm_MC[i]))
             f.write('Wid_arm %i %i %i %i %i\n'%tuple(warm))
         DM_list[i] = ymw16(DM=np.array([dist[i]*1e3]), l=l, b=b, ndir=2) # convert kpc to pc
+
     # print DM_list
     t2 = time.time()
     print "MC took: %.2fs"%(t2-t1)
@@ -468,19 +463,19 @@ def DM_pdf(name,
 
     # dist = np.array([dist for i in range(n_MC)]) # reshpae dist
 
-
+    # Currently not functioning
     # Get PDF
-    if mode =='kde':
-        print "\nWARNING: KDE mode is currently not working properly. Please use mode=hist instead.\n"
-        print "Starting on gaussian_kde"
-        t1 = time.time()
-        dist = histedges_equalN(dist, nd)
-        DM_vals = histedges_equalN(DM_list, ndm) # Equal number of events between values
-        values =  np.array(zip(dist.flatten(), DM_list.flatten())).T # Get 2d values into correct shape for gaussian_kde
-        kde_func = stats.gaussian_kde(values)
-        t2 = time.time()
-        print "Performing kde took: %.2fs"%(t2-t1)
-        return kde_func, dist, DM_vals
+    # if mode =='kde':
+    #     print "\nWARNING: KDE mode is currently not working properly. Please use mode=hist instead.\n"
+    #     print "Starting on gaussian_kde"
+    #     t1 = time.time()
+    #     dist = histedges_equalN(dist, nd)
+    #     DM_vals = histedges_equalN(DM_list, ndm) # Equal number of events between values
+    #     values =  np.array(zip(dist.flatten(), DM_list.flatten())).T # Get 2d values into correct shape for gaussian_kde
+    #     kde_func = stats.gaussian_kde(values)
+    #     t2 = time.time()
+    #     print "Performing kde took: %.2fs"%(t2-t1)
+    #     return kde_func, dist, DM_vals
 
     elif mode=='hist':
         # print "Mode hist currently not defined for DM_pdf(). Quitting"
@@ -500,7 +495,6 @@ def DM_pdf(name,
         t2 = time.time()
         print "Getting histogram took: %.2fs"%(t2-t1)
         return H, dist_edges, DMedges
-
 
 
 def dist_parallax(name, P, P_errors, nd=100, save_files=False, plots=False,
