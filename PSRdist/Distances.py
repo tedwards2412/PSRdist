@@ -477,7 +477,7 @@ def DM_pdf(name,
     #     print "Performing kde took: %.2fs"%(t2-t1)
     #     return kde_func, dist, DM_vals
 
-    elif mode=='hist':
+    if mode=='hist':
         # print "Mode hist currently not defined for DM_pdf(). Quitting"
         # quit()
         print "Starting on histogram"
