@@ -1052,9 +1052,12 @@ table {
     <li class="set"><h3><a href="#header-functions">Functions</a></h3>
       
   <ul>
+    <li class="mono"><a href="#PSRdist.Distances.DM_pdf">DM_pdf</a></li>
     <li class="mono"><a href="#PSRdist.Distances.dist_bf">dist_bf</a></li>
     <li class="mono"><a href="#PSRdist.Distances.dist_parallax">dist_parallax</a></li>
     <li class="mono"><a href="#PSRdist.Distances.dist_pdf">dist_pdf</a></li>
+    <li class="mono"><a href="#PSRdist.Distances.histedges_equalN">histedges_equalN</a></li>
+    <li class="mono"><a href="#PSRdist.Distances.px_pdf">px_pdf</a></li>
     <li class="mono"><a href="#PSRdist.Distances.ymw16">ymw16</a></li>
   </ul>
 
@@ -1083,19 +1086,38 @@ table {
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">py_ymw16</span> <span class="kn">as</span> <span class="nn">ymw</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">simps</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="kn">as</span> <span class="nn">so</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">copyfile</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="c1"># from sklearn.neighbors.kde import KernelDensity</span>
 
 <span class="c1"># Get directory name</span>
 <span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
 <span class="n">workingdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
-<span class="k">print</span> <span class="n">workingdir</span>
 
-<span class="k">def</span> <span class="nf">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="c1"># H E L P E R  F U N C T I O N S</span>
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">histedges_equalN</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">nbin</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    Get histogram edges s.t. there are equal number or events in each bin</span>
+<span class="sd">    From : https://stackoverflow.com/questions/39418380/histogram-with-equal-number-of-points-in-each-bin</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">npt</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">nbin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npt</span><span class="p">),</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="c1"># M A I N</span>
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">best_fit</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calcultes the distance (DM) to a source using the provided</span>
+<span class="sd">    dispersion measure (distance). This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy.</span>
 
 <span class="sd">    Requires an installed version of the ymw16 model in the local</span>
@@ -1106,23 +1128,27 @@ table {
 
 <span class="sd">    Arguments</span>
 <span class="sd">    ---------</span>
-<span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
+<span class="sd">    * DM [array] : Dispersion measure [pp/cm^3] or Distance [kpc]</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    * Dist [array] : Distance to PSR # in kpc</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Dist</span> <span class="o">=</span> <span class="n">ymw</span><span class="o">.</span><span class="n">distances</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">dirname</span><span class="o">=</span><span class="n">dirname</span><span class="o">+</span><span class="s2">&quot;/ymw16_v1.3/&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_fit</span><span class="p">:</span>
+        <span class="c1"># reset to best fit value</span>
+        <span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/ymw16_v1.3/ymw16par_bestfit.txt&quot;</span><span class="o">%</span><span class="n">dirname</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/ymw16_v1.3/ymw16par.txt&quot;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span>
+
+    <span class="n">Dist</span> <span class="o">=</span> <span class="n">ymw</span><span class="o">.</span><span class="n">distances</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">dirname</span><span class="o">=</span><span class="n">dirname</span><span class="o">+</span><span class="s2">&quot;/ymw16_v1.3/&quot;</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="n">ndir</span><span class="p">)</span>
     <span class="c1"># Dist = ymw.distances(l=l, b=b, DM=DM)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Dist</span><span class="p">)</span>
 
-
-<span class="k">def</span> <span class="nf">dist_bf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">dist_bf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy with their best-fit</span>
 <span class="sd">    parameters.</span>
 
@@ -1132,6 +1158,7 @@ table {
 <span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1162,18 +1189,16 @@ table {
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
     <span class="k">print</span> <span class="s2">&quot;Resetting input file: Done!&quot;</span>
 
-    <span class="k">return</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="n">ndir</span><span class="p">)</span>
 
-<span class="c1"># def dist_pdf(name, DM, l, b, n_dbins,</span>
 <span class="k">def</span> <span class="nf">dist_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
     <span class="n">MC_mode</span> <span class="o">=</span> <span class="s2">&quot;bestfit&quot;</span><span class="p">,</span> <span class="n">n_MC</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-    <span class="n">error</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy.</span>
 
 <span class="sd">    The pdf is calculated by varying the parameters in the ymw16 model</span>
@@ -1186,6 +1211,7 @@ table {
 <span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 <span class="sd">    * n_MC [float] : number of monte carlo samples</span>
 <span class="sd">    * mode [str] : return PDF from kernel density estimator (kde) or</span>
 <span class="sd">                 as a hisgogram (hist).</span>
@@ -1294,7 +1320,7 @@ table {
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">val_narm_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
-        <span class="n">D_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">))</span>
+        <span class="n">D_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
     <span class="n">D_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">D_list</span><span class="p">)</span>
 
 
@@ -1327,7 +1353,7 @@ table {
             <span class="n">pdf_peak</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">,:])]</span>
             <span class="n">one_sigma</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">brentq</span><span class="p">(</span><span class="n">confidence_interval</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">pdf_peak</span><span class="p">,</span> <span class="mf">0.68</span><span class="p">))</span>
             <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">pdf_peak</span><span class="p">,</span><span class="n">one_sigma</span><span class="p">])</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
 
     <span class="c1"># --&gt; make plots</span>
     <span class="k">if</span> <span class="n">plots</span><span class="p">:</span>
@@ -1337,7 +1363,7 @@ table {
                 <span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
 
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
@@ -1345,20 +1371,20 @@ table {
             <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;D [kpc]&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s1">&#39;/plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="c1"># --&gt; save files</span>
     <span class="k">if</span> <span class="n">save_files</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DM</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s2">&quot;kde&quot;</span><span class="p">:</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="nb">zip</span><span class="p">(</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 
             <span class="k">elif</span> <span class="n">mode</span><span class="o">==</span><span class="s2">&quot;hist&quot;</span><span class="p">:</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_Dedges_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_Dedges_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 
 
@@ -1367,7 +1393,194 @@ table {
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dist_pdfs</span><span class="p">,</span> <span class="n">dist</span>
 
-<span class="k">def</span> <span class="nf">dist_parallax</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_errors</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">DM_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
+    <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
+    <span class="n">d_bf</span><span class="p">,</span> <span class="n">sigma_d</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+    <span class="c1"># mode=&quot;hist&quot;,</span>
+    <span class="n">MC_mode</span> <span class="o">=</span> <span class="s2">&quot;bestfit&quot;</span><span class="p">,</span> <span class="n">n_MC</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">,</span>
+    <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ndm</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">equal_d_spacing</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calcultes the distance to a source using the provided</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    for electron density distribution in the galaxy.</span>
+
+<span class="sd">    The pdf is calculated by varying the parameters in the ymw16 model</span>
+<span class="sd">    and recalculating the distance to the PSR which is the biggest source</span>
+<span class="sd">    of systematics in the distance calculation</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    * name [array] : List of names of sources for labelling</span>
+<span class="sd">    * l [array] : longitude (galactic coordinates)</span>
+<span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * d_bf [array]: best fit distance </span>
+<span class="sd">    * n_MC [float] : number of monte carlo samples</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    * MC_mode -- bestfit, uniform, gaussian# (# = error in %)</span>
+<span class="sd">    * save_files -- saves pdfs as txt files (default False)</span>
+<span class="sd">    * plots -- pdf plots for each pulsar (default False)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    * P(DM|D) [array] : 2-D Histogram where $\int dDM P(DM|D) = 1$</span>
+<span class="sd">    * dist_edges [array] : bin edges # [kpc]</span>
+<span class="sd">    * DM_edges [array] : bin edges # [pp/cm^3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;hist&quot;</span>
+    <span class="c1"># Set up distance: we draw distance assuming a lognormal around the best-fit</span>
+    <span class="k">if</span> <span class="n">sigma_d</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">sigma_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span> <span class="c1"># Meaning that a value that is at 2xd_bf is 2 sigma away</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d_bf</span><span class="p">),</span> <span class="n">sigma_d</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_MC</span><span class="p">))</span>
+    <span class="n">_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">dist</span><span class="o">&gt;</span><span class="mi">20</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Make sure we don&#39;t have very many</span>
+        <span class="n">dist</span><span class="p">[</span><span class="n">_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d_bf</span><span class="p">),</span> <span class="n">sigma_d</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">dist</span><span class="o">&gt;</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1"># original best fit values</span>
+    <span class="n">filename_bf</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par_bestfit.txt&#39;</span>
+    <span class="n">names_bf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">vals_bf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="c1"># --&gt; remove incomplete Ele_arm and Wid_arm</span>
+    <span class="n">vals_bf</span> <span class="o">=</span> <span class="n">vals_bf</span><span class="p">[(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="n">names_bf</span> <span class="o">=</span> <span class="n">names_bf</span><span class="p">[(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="c1"># --&gt; have to load Ele_arm separately (since it has one column for each narm)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+          <span class="k">if</span> <span class="s2">&quot;Ele_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">narm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="s2">&quot;Wid_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">warm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+
+
+    <span class="c1"># reset the input file for the ymw16_v1.3 code and load the values</span>
+    <span class="n">filename_input</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par.txt&#39;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names_bf</span><span class="p">,</span> <span class="n">vals_bf</span><span class="p">),</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">narm</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
+    <span class="k">print</span> <span class="s2">&quot;Resetting input file: Done!&quot;</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">names</span><span class="p">[(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+          <span class="k">if</span> <span class="s2">&quot;Ele_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">narm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="s2">&quot;Wid_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">warm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Load the file containing parameter ranges and best fit values</span>
+    <span class="n">filename_ranges</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par_ranges.txt&#39;</span>
+    <span class="n">names_ranges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_ranges</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">val_lo</span><span class="p">,</span> <span class="n">val_hi</span><span class="p">,</span> <span class="n">val_bf</span><span class="p">,</span> <span class="n">val_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span>
+        <span class="n">filename_ranges</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">narm_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ymw16_v1.3/ymw16par_Ele_arm_unc.txt&#39;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span>
+    <span class="n">narm_lo</span><span class="p">,</span> <span class="n">narm_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ymw16_v1.3/ymw16par_Ele_arm_ranges.txt&#39;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># --- Run the Monte Carlo --- #</span>
+    <span class="c1"># Create list</span>
+    <span class="n">DM_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dm_pdfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dm</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Mask that says which parameters to vary</span>
+    <span class="n">mask1</span> <span class="o">=</span> <span class="p">(</span><span class="n">val_lo</span> <span class="o">!=</span> <span class="n">val_hi</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;Number of free parameters: </span><span class="si">%i</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Match the MC values to input file values</span>
+    <span class="n">ind_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">n</span><span class="o">==</span><span class="n">names</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names_ranges</span><span class="p">[</span><span class="n">mask1</span><span class="p">]])</span>
+
+    <span class="k">if</span> <span class="n">MC_mode</span> <span class="o">==</span> <span class="s1">&#39;bestfit&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a gaussian distribution with an uncertainty</span>
+        <span class="c1"># corresponding to the uncertainty in table 2 of YMW16</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">val_unc</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">narm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">narm_unc</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+    <span class="k">elif</span> <span class="n">MC_mode</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a gaussian distribution with an uncertainty</span>
+        <span class="c1"># of a given percentage (appended after gaussian)</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">MC_mode</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span><span class="o">/</span><span class="mf">100.</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">]</span> <span class="o">*</span> <span class="n">sig</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">narm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">narm</span> <span class="o">*</span> <span class="n">sig</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+    <span class="k">elif</span> <span class="n">MC_mode</span> <span class="o">==</span> <span class="s1">&#39;uniform&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a uniform distribution</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">val_lo</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span> <span class="n">high</span><span class="o">=</span><span class="n">val_hi</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">narm_lo</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">narm_hi</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+
+    <span class="c1"># Run MC</span>
+    <span class="k">print</span> <span class="s2">&quot;Starting MC&quot;</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="c1"># DM_list = np.zeros((n_MC, len(dist)))</span>
+    <span class="n">DM_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_MC</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;MC values for YMW16-shape: &quot;</span><span class="p">,</span> <span class="n">val_MC</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_MC</span><span class="p">):</span>
+        <span class="c1"># update values</span>
+        <span class="n">vals</span><span class="p">[</span><span class="n">ind_order</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="c1"># Set values</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">vals</span><span class="p">),</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">val_narm_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
+        <span class="n">DM_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="mf">1e3</span><span class="p">]),</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># convert kpc to pc</span>
+
+    <span class="c1"># print DM_list</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">print</span> <span class="s2">&quot;MC took: </span><span class="si">%.2f</span><span class="s2">s&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;This is: </span><span class="si">%.2e</span><span class="s2">s per DM&quot;</span><span class="o">%</span><span class="p">((</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_MC</span><span class="p">)</span>
+
+    <span class="c1"># dist = np.array([dist for i in range(n_MC)]) # reshpae dist</span>
+
+    <span class="c1"># Currently not functioning</span>
+    <span class="c1"># Get PDF</span>
+    <span class="c1"># if mode ==&#39;kde&#39;:</span>
+    <span class="c1">#     print &quot;\nWARNING: KDE mode is currently not working properly. Please use mode=hist instead.\n&quot;</span>
+    <span class="c1">#     print &quot;Starting on gaussian_kde&quot;</span>
+    <span class="c1">#     t1 = time.time()</span>
+    <span class="c1">#     dist = histedges_equalN(dist, nd)</span>
+    <span class="c1">#     DM_vals = histedges_equalN(DM_list, ndm) # Equal number of events between values</span>
+    <span class="c1">#     values =  np.array(zip(dist.flatten(), DM_list.flatten())).T # Get 2d values into correct shape for gaussian_kde</span>
+    <span class="c1">#     kde_func = stats.gaussian_kde(values)</span>
+    <span class="c1">#     t2 = time.time()</span>
+    <span class="c1">#     print &quot;Performing kde took: %.2fs&quot;%(t2-t1)</span>
+    <span class="c1">#     return kde_func, dist, DM_vals</span>
+
+    <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s1">&#39;hist&#39;</span><span class="p">:</span>
+        <span class="c1"># print &quot;Mode hist currently not defined for DM_pdf(). Quitting&quot;</span>
+        <span class="c1"># quit()</span>
+        <span class="k">print</span> <span class="s2">&quot;Starting on histogram&quot;</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># print DM_list</span>
+        <span class="c1"># dist_edges = histedges_equalN(dist, np.min(nd, int(n_MC / 100.)))</span>
+        <span class="c1"># DMedges = histedges_equalN(DM_list, np.min(ndm, int(n_MC / 100.)))</span>
+        <span class="n">dist_edges</span> <span class="o">=</span> <span class="n">histedges_equalN</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">equal_d_spacing</span><span class="p">:</span>
+            <span class="n">dist_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dist_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dist_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">nd</span><span class="p">)</span>
+
+        <span class="n">DM_edges</span> <span class="o">=</span> <span class="n">histedges_equalN</span><span class="p">(</span><span class="n">DM_list</span><span class="p">,</span> <span class="n">ndm</span><span class="p">)</span>
+        <span class="n">H</span><span class="p">,</span> <span class="n">dist_edges</span><span class="p">,</span> <span class="n">DMedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">DM_list</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dist_edges</span><span class="p">,</span> <span class="n">DM_edges</span><span class="p">]),</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s2">&quot;Getting histogram took: </span><span class="si">%.2f</span><span class="s2">s&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">H</span><span class="p">,</span> <span class="n">dist_edges</span><span class="p">,</span> <span class="n">DMedges</span>
+
+
+<span class="k">def</span> <span class="nf">dist_parallax</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_errors</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Arguments</span>
 <span class="sd">    ---------</span>
@@ -1375,7 +1588,7 @@ table {
 <span class="sd">    * P [array] : List of names of sources for labelling</span>
 <span class="sd">    * P_error [ndarray] : List of names of sources for labelling</span>
 <span class="sd">        Shape[i] = (# of sources,) for symmetric</span>
-<span class="sd">        Shape[i] = (# of sources, 2) for asymmetric </span>
+<span class="sd">        Shape[i] = (# of sources, 2) for asymmetric</span>
 <span class="sd">        - [:,0] is the lower error, [:,1] is the upper error</span>
 <span class="sd">        Example np.array([[0.1,0.2],0.1,0.1])</span>
 <span class="sd">        First element represents asymmetric errors, second</span>
@@ -1383,7 +1596,7 @@ table {
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    * dist_pdfs [array] : PDFs of the distance to PSRs</span>
+<span class="sd">    * dist_pdfs [array] : PDFs of the true distance to PSRs given a measurement of w</span>
 <span class="sd">    * dist [array] : distances for each pdf point (if kde) or</span>
 <span class="sd">                   bin edges (if hist) # [kpc]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1391,44 +1604,82 @@ table {
     <span class="n">sigma_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span>
+            <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="n">dist_pdfs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">d_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span><span class="mf">15.</span><span class="p">,</span><span class="n">num</span><span class="o">=</span><span class="n">nd</span><span class="p">)</span>
-    <span class="n">d_width</span> <span class="o">=</span> <span class="n">d_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">d_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">d_cen</span> <span class="o">=</span> <span class="n">d_list</span> <span class="o">+</span> <span class="n">d_width</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">dist_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># d_list = np.linspace(0.,15.,num=nd)</span>
+    <span class="c1"># d_width = d_list[1] - d_list[0]</span>
+    <span class="c1"># d_cen = d_list + d_width/2</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-        <span class="n">d_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">d_cen</span> <span class="o">-</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_cen</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">d_cen</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">d_cen</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_cen</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">d_cen</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span>
+        <span class="c1"># print np.where(P[i]-3*sigma_P[i,0]&gt;0, P[i]+3*sigma_P[i,0], 0.001)</span>
+        <span class="c1"># d_list = np.linspace(np.where(P[i]-3*sigma_P[i,0]&gt;0, P[i]-3*sigma_P[i,0], 0.001),</span>
+        <span class="c1">#     1./(P[i]+3*sigma_P[i,1]), num=nd)</span>
+        <span class="n">d_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span> <span class="mf">15.</span><span class="p">),</span>
+            <span class="n">num</span><span class="o">=</span><span class="n">nd</span><span class="p">)</span>
 
-        <span class="n">A</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">d_hist</span><span class="o">*</span><span class="n">d_width</span><span class="p">)</span> <span class="c1"># Normalising factor</span>
-        <span class="n">dist_pdfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_hist</span><span class="o">/</span><span class="n">A</span><span class="p">)</span>
+
+        <span class="n">d_pdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">d_list</span> <span class="o">-</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_list</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">d_list</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">d_list</span> <span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_list</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">d_list</span><span class="o">**</span><span class="mf">2.</span><span class="p">))</span>
+
+        <span class="c1"># A = sum(d_hist*d_width) # Normalising factor</span>
+        <span class="n">d_pdf</span> <span class="o">/=</span> <span class="n">simps</span><span class="p">(</span><span class="n">d_pdf</span><span class="p">,</span> <span class="n">d_list</span><span class="p">)</span>
+        <span class="c1"># print name[i], d_list.min(), d_list.max(), d_pdf.max()</span>
+        <span class="n">dist_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_list</span><span class="p">)</span>
+        <span class="n">dist_pdfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_pdf</span><span class="p">)</span>
 
     <span class="n">dist_pdfs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">)</span>
-        
+    <span class="n">dist_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dist_list</span><span class="p">)</span>
+
+    <span class="c1"># print dist_pdfs.shape</span>
     <span class="k">if</span> <span class="n">save_files</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_parallax.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> 
-                <span class="nb">zip</span><span class="p">(</span><span class="n">d_cen</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-        
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_parallax.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+
     <span class="c1"># --&gt; make plots</span>
     <span class="k">if</span> <span class="n">plots</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">dist</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">_dist</span><span class="p">,</span> <span class="n">kde_func</span><span class="p">(</span><span class="n">_dist</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;D [kpc]&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s1">&#39;/plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
+            <span class="c1"># plt.savefig(dirname + &#39;/../plots/%s_parallax.pdf&#39;%(name[i]))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../plots/</span><span class="si">%s</span><span class="s1">_parallax.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">dist_pdfs</span><span class="p">,</span> <span class="n">dist</span>
+    <span class="k">return</span> <span class="n">dist_pdfs</span><span class="p">,</span> <span class="n">dist_list</span>
+
+<span class="k">def</span> <span class="nf">px_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">sigma_px</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    * name [array] : List of names of sources for labelling</span>
+<span class="sd">    * px [float] : observed parallax [mas]</span>
+<span class="sd">    * dist [array] : True distance to a source [kpc]</span>
+<span class="sd">    * sigma_px [array] : Error on parallax [mas]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    * px_pdf [array] : PDFs of the measured parallax to PSRs given a true distance Dt (not correctly normalized!)</span>
+<span class="sd">    * dist [array] : distances for each pdf point (if kde) or</span>
+<span class="sd">                   bin edges (if hist) # [kpc]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check for symmetric or asymmetric</span>
+
+    <span class="n">px_pdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">px</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">dist</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">px</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">dist</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_px</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">dist</span> <span class="o">-</span> <span class="n">px</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">px</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">dist</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_px</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">))</span> <span class="c1"># P(w_meas|w(D))</span>
+
+    <span class="k">return</span> <span class="n">px_pdf</span><span class="p">,</span> <span class="n">dist</span>
 </pre></div>
 
   </div>
@@ -1457,15 +1708,242 @@ table {
     <h2 class="section-title" id="header-functions">Functions</h2>
       
   <div class="item">
-    <div class="name def" id="PSRdist.Distances.dist_bf">
-    <p>def <span class="ident">dist_bf</span>(</p><p>name, DM, l, b)</p>
+    <div class="name def" id="PSRdist.Distances.DM_pdf">
+    <p>def <span class="ident">DM_pdf</span>(</p><p>name, l, b, d_bf, sigma_d=None, MC_mode=&#39;bestfit&#39;, n_MC=1000, outdir=&#39;/Users/tedwards/Dropbox/PhD_Amsterdam/modules/PSRdist/PSRdist&#39;, nd=100, ndm=50, equal_d_spacing=True)</p>
     </div>
     
 
     
   
     <div class="desc"><p>Calcultes the distance to a source using the provided
-despersion measure. This function assumes the ymw16 model
+dispersion measure. This function assumes the ymw16 model
+for electron density distribution in the galaxy.</p>
+<p>The pdf is calculated by varying the parameters in the ymw16 model
+and recalculating the distance to the PSR which is the biggest source
+of systematics in the distance calculation</p>
+<h2>Arguments</h2>
+<ul>
+<li>name [array] : List of names of sources for labelling</li>
+<li>l [array] : longitude (galactic coordinates)</li>
+<li>b [array] : latitude (galactic coordinates)</li>
+<li>d_bf [array]: best fit distance </li>
+<li>n_MC [float] : number of monte carlo samples</li>
+</ul>
+<p>Keyword arguments:
+<em> MC_mode -- bestfit, uniform, gaussian# (# = error in %)
+</em> save_files -- saves pdfs as txt files (default False)
+* plots -- pdf plots for each pulsar (default False)</p>
+<h2>Returns</h2>
+<ul>
+<li>P(DM|D) [array] : 2-D Histogram where $\int dDM P(DM|D) = 1$</li>
+<li>dist_edges [array] : bin edges # [kpc]</li>
+<li>DM_edges [array] : bin edges # [pp/cm^3]</li>
+</ul></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.DM_pdf', this);">Show source &equiv;</a></p>
+  <div id="source-PSRdist.Distances.DM_pdf" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">DM_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
+    <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
+    <span class="n">d_bf</span><span class="p">,</span> <span class="n">sigma_d</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+    <span class="c1"># mode=&quot;hist&quot;,</span>
+    <span class="n">MC_mode</span> <span class="o">=</span> <span class="s2">&quot;bestfit&quot;</span><span class="p">,</span> <span class="n">n_MC</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">,</span>
+    <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ndm</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">equal_d_spacing</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calcultes the distance to a source using the provided</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    for electron density distribution in the galaxy.</span>
+
+<span class="sd">    The pdf is calculated by varying the parameters in the ymw16 model</span>
+<span class="sd">    and recalculating the distance to the PSR which is the biggest source</span>
+<span class="sd">    of systematics in the distance calculation</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    * name [array] : List of names of sources for labelling</span>
+<span class="sd">    * l [array] : longitude (galactic coordinates)</span>
+<span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * d_bf [array]: best fit distance </span>
+<span class="sd">    * n_MC [float] : number of monte carlo samples</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    * MC_mode -- bestfit, uniform, gaussian# (# = error in %)</span>
+<span class="sd">    * save_files -- saves pdfs as txt files (default False)</span>
+<span class="sd">    * plots -- pdf plots for each pulsar (default False)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    * P(DM|D) [array] : 2-D Histogram where $\int dDM P(DM|D) = 1$</span>
+<span class="sd">    * dist_edges [array] : bin edges # [kpc]</span>
+<span class="sd">    * DM_edges [array] : bin edges # [pp/cm^3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;hist&quot;</span>
+    <span class="c1"># Set up distance: we draw distance assuming a lognormal around the best-fit</span>
+    <span class="k">if</span> <span class="n">sigma_d</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">sigma_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span> <span class="c1"># Meaning that a value that is at 2xd_bf is 2 sigma away</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d_bf</span><span class="p">),</span> <span class="n">sigma_d</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_MC</span><span class="p">))</span>
+    <span class="n">_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">dist</span><span class="o">&gt;</span><span class="mi">20</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Make sure we don&#39;t have very many</span>
+        <span class="n">dist</span><span class="p">[</span><span class="n">_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">d_bf</span><span class="p">),</span> <span class="n">sigma_d</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">dist</span><span class="o">&gt;</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1"># original best fit values</span>
+    <span class="n">filename_bf</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par_bestfit.txt&#39;</span>
+    <span class="n">names_bf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">vals_bf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="c1"># --&gt; remove incomplete Ele_arm and Wid_arm</span>
+    <span class="n">vals_bf</span> <span class="o">=</span> <span class="n">vals_bf</span><span class="p">[(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="n">names_bf</span> <span class="o">=</span> <span class="n">names_bf</span><span class="p">[(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names_bf</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="c1"># --&gt; have to load Ele_arm separately (since it has one column for each narm)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_bf</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+          <span class="k">if</span> <span class="s2">&quot;Ele_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">narm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="s2">&quot;Wid_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">warm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+
+
+    <span class="c1"># reset the input file for the ymw16_v1.3 code and load the values</span>
+    <span class="n">filename_input</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par.txt&#39;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names_bf</span><span class="p">,</span> <span class="n">vals_bf</span><span class="p">),</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">narm</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
+    <span class="k">print</span> <span class="s2">&quot;Resetting input file: Done!&quot;</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">names</span><span class="p">[(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Wid_arm&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">names</span><span class="o">!=</span><span class="s1">&#39;Ele_arm&#39;</span><span class="p">)]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+          <span class="k">if</span> <span class="s2">&quot;Ele_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">narm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="s2">&quot;Wid_arm&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+              <span class="n">warm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Load the file containing parameter ranges and best fit values</span>
+    <span class="n">filename_ranges</span> <span class="o">=</span> <span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/ymw16_v1.3/ymw16par_ranges.txt&#39;</span>
+    <span class="n">names_ranges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename_ranges</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;str&#39;</span><span class="p">)</span>
+    <span class="n">val_lo</span><span class="p">,</span> <span class="n">val_hi</span><span class="p">,</span> <span class="n">val_bf</span><span class="p">,</span> <span class="n">val_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span>
+        <span class="n">filename_ranges</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">narm_unc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ymw16_v1.3/ymw16par_Ele_arm_unc.txt&#39;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span>
+    <span class="n">narm_lo</span><span class="p">,</span> <span class="n">narm_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/ymw16_v1.3/ymw16par_Ele_arm_ranges.txt&#39;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># --- Run the Monte Carlo --- #</span>
+    <span class="c1"># Create list</span>
+    <span class="n">DM_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dm_pdfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dm</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Mask that says which parameters to vary</span>
+    <span class="n">mask1</span> <span class="o">=</span> <span class="p">(</span><span class="n">val_lo</span> <span class="o">!=</span> <span class="n">val_hi</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;Number of free parameters: </span><span class="si">%i</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># Match the MC values to input file values</span>
+    <span class="n">ind_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">n</span><span class="o">==</span><span class="n">names</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names_ranges</span><span class="p">[</span><span class="n">mask1</span><span class="p">]])</span>
+
+    <span class="k">if</span> <span class="n">MC_mode</span> <span class="o">==</span> <span class="s1">&#39;bestfit&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a gaussian distribution with an uncertainty</span>
+        <span class="c1"># corresponding to the uncertainty in table 2 of YMW16</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">val_unc</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">narm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">narm_unc</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+    <span class="k">elif</span> <span class="n">MC_mode</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a gaussian distribution with an uncertainty</span>
+        <span class="c1"># of a given percentage (appended after gaussian)</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">MC_mode</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span><span class="o">/</span><span class="mf">100.</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">val_bf</span><span class="p">[</span><span class="n">mask1</span><span class="p">]</span> <span class="o">*</span> <span class="n">sig</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">narm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">narm</span> <span class="o">*</span> <span class="n">sig</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+    <span class="k">elif</span> <span class="n">MC_mode</span> <span class="o">==</span> <span class="s1">&#39;uniform&#39;</span><span class="p">:</span>
+        <span class="c1"># Draw from a uniform distribution</span>
+        <span class="n">val_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">val_lo</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span> <span class="n">high</span><span class="o">=</span><span class="n">val_hi</span><span class="p">[</span><span class="n">mask1</span><span class="p">],</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="n">mask1</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="n">val_narm_MC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">narm_lo</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">narm_hi</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_MC</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">narm</span><span class="p">)))</span>
+
+
+    <span class="c1"># Run MC</span>
+    <span class="k">print</span> <span class="s2">&quot;Starting MC&quot;</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="c1"># DM_list = np.zeros((n_MC, len(dist)))</span>
+    <span class="n">DM_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_MC</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;MC values for YMW16-shape: &quot;</span><span class="p">,</span> <span class="n">val_MC</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_MC</span><span class="p">):</span>
+        <span class="c1"># update values</span>
+        <span class="n">vals</span><span class="p">[</span><span class="n">ind_order</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="c1"># Set values</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">vals</span><span class="p">),</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">val_narm_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
+        <span class="n">DM_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="mf">1e3</span><span class="p">]),</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># convert kpc to pc</span>
+
+    <span class="c1"># print DM_list</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">print</span> <span class="s2">&quot;MC took: </span><span class="si">%.2f</span><span class="s2">s&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s2">&quot;This is: </span><span class="si">%.2e</span><span class="s2">s per DM&quot;</span><span class="o">%</span><span class="p">((</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_MC</span><span class="p">)</span>
+
+    <span class="c1"># dist = np.array([dist for i in range(n_MC)]) # reshpae dist</span>
+
+    <span class="c1"># Currently not functioning</span>
+    <span class="c1"># Get PDF</span>
+    <span class="c1"># if mode ==&#39;kde&#39;:</span>
+    <span class="c1">#     print &quot;\nWARNING: KDE mode is currently not working properly. Please use mode=hist instead.\n&quot;</span>
+    <span class="c1">#     print &quot;Starting on gaussian_kde&quot;</span>
+    <span class="c1">#     t1 = time.time()</span>
+    <span class="c1">#     dist = histedges_equalN(dist, nd)</span>
+    <span class="c1">#     DM_vals = histedges_equalN(DM_list, ndm) # Equal number of events between values</span>
+    <span class="c1">#     values =  np.array(zip(dist.flatten(), DM_list.flatten())).T # Get 2d values into correct shape for gaussian_kde</span>
+    <span class="c1">#     kde_func = stats.gaussian_kde(values)</span>
+    <span class="c1">#     t2 = time.time()</span>
+    <span class="c1">#     print &quot;Performing kde took: %.2fs&quot;%(t2-t1)</span>
+    <span class="c1">#     return kde_func, dist, DM_vals</span>
+
+    <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s1">&#39;hist&#39;</span><span class="p">:</span>
+        <span class="c1"># print &quot;Mode hist currently not defined for DM_pdf(). Quitting&quot;</span>
+        <span class="c1"># quit()</span>
+        <span class="k">print</span> <span class="s2">&quot;Starting on histogram&quot;</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># print DM_list</span>
+        <span class="c1"># dist_edges = histedges_equalN(dist, np.min(nd, int(n_MC / 100.)))</span>
+        <span class="c1"># DMedges = histedges_equalN(DM_list, np.min(ndm, int(n_MC / 100.)))</span>
+        <span class="n">dist_edges</span> <span class="o">=</span> <span class="n">histedges_equalN</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">equal_d_spacing</span><span class="p">:</span>
+            <span class="n">dist_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dist_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dist_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">nd</span><span class="p">)</span>
+
+        <span class="n">DM_edges</span> <span class="o">=</span> <span class="n">histedges_equalN</span><span class="p">(</span><span class="n">DM_list</span><span class="p">,</span> <span class="n">ndm</span><span class="p">)</span>
+        <span class="n">H</span><span class="p">,</span> <span class="n">dist_edges</span><span class="p">,</span> <span class="n">DMedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">DM_list</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dist_edges</span><span class="p">,</span> <span class="n">DM_edges</span><span class="p">]),</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s2">&quot;Getting histogram took: </span><span class="si">%.2f</span><span class="s2">s&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">H</span><span class="p">,</span> <span class="n">dist_edges</span><span class="p">,</span> <span class="n">DMedges</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="PSRdist.Distances.dist_bf">
+    <p>def <span class="ident">dist_bf</span>(</p><p>name, DM, l, b, ndir=1)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Calcultes the distance to a source using the provided
+dispersion measure. This function assumes the ymw16 model
 for electron density distribution in the galaxy with their best-fit
 parameters.</p>
 <h2>Arguments</h2>
@@ -1474,16 +1952,17 @@ parameters.</p>
 <li>DM [array] : Dispersion measure # in pp/cm^3</li>
 <li>l [array] : longitude (galactic coordinates)</li>
 <li>b [array] : latitude (galactic coordinates)</li>
+<li>ndir : (1) DM to distance, (2) distance to DM</li>
 </ul>
 <h2>Returns</h2>
 <p>Dist [array] : Distance to PSRs # in kpc</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.dist_bf', this);">Show source &equiv;</a></p>
   <div id="source-PSRdist.Distances.dist_bf" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dist_bf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dist_bf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy with their best-fit</span>
 <span class="sd">    parameters.</span>
 
@@ -1493,6 +1972,7 @@ parameters.</p>
 <span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1523,7 +2003,7 @@ parameters.</p>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
     <span class="k">print</span> <span class="s2">&quot;Resetting input file: Done!&quot;</span>
 
-    <span class="k">return</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="n">ndir</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -1534,7 +2014,7 @@ parameters.</p>
       
   <div class="item">
     <div class="name def" id="PSRdist.Distances.dist_parallax">
-    <p>def <span class="ident">dist_parallax</span>(</p><p>name, P, P_errors, nd=100, save_files=False, plots=False)</p>
+    <p>def <span class="ident">dist_parallax</span>(</p><p>name, P, P_errors, nd=100, save_files=False, plots=False, outdir=&#39;/Users/tedwards/Dropbox/PhD_Amsterdam/modules/PSRdist/PSRdist&#39;)</p>
     </div>
     
 
@@ -1546,7 +2026,7 @@ parameters.</p>
 <li>P [array] : List of names of sources for labelling</li>
 <li>P_error [ndarray] : List of names of sources for labelling
     Shape[i] = (# of sources,) for symmetric
-    Shape[i] = (# of sources, 2) for asymmetric <ul>
+    Shape[i] = (# of sources, 2) for asymmetric<ul>
 <li>[:,0] is the lower error, [:,1] is the upper error
 Example np.array([[0.1,0.2],0.1,0.1])
 First element represents asymmetric errors, second
@@ -1556,14 +2036,15 @@ and third are symmetric</li>
 </ul>
 <h2>Returns</h2>
 <ul>
-<li>dist_pdfs [array] : PDFs of the distance to PSRs</li>
+<li>dist_pdfs [array] : PDFs of the true distance to PSRs given a measurement of w</li>
 <li>dist [array] : distances for each pdf point (if kde) or
                bin edges (if hist) # [kpc]</li>
 </ul></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.dist_parallax', this);">Show source &equiv;</a></p>
   <div id="source-PSRdist.Distances.dist_parallax" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dist_parallax</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_errors</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dist_parallax</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_errors</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Arguments</span>
 <span class="sd">    ---------</span>
@@ -1571,7 +2052,7 @@ and third are symmetric</li>
 <span class="sd">    * P [array] : List of names of sources for labelling</span>
 <span class="sd">    * P_error [ndarray] : List of names of sources for labelling</span>
 <span class="sd">        Shape[i] = (# of sources,) for symmetric</span>
-<span class="sd">        Shape[i] = (# of sources, 2) for asymmetric </span>
+<span class="sd">        Shape[i] = (# of sources, 2) for asymmetric</span>
 <span class="sd">        - [:,0] is the lower error, [:,1] is the upper error</span>
 <span class="sd">        Example np.array([[0.1,0.2],0.1,0.1])</span>
 <span class="sd">        First element represents asymmetric errors, second</span>
@@ -1579,7 +2060,7 @@ and third are symmetric</li>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    * dist_pdfs [array] : PDFs of the distance to PSRs</span>
+<span class="sd">    * dist_pdfs [array] : PDFs of the true distance to PSRs given a measurement of w</span>
 <span class="sd">    * dist [array] : distances for each pdf point (if kde) or</span>
 <span class="sd">                   bin edges (if hist) # [kpc]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1587,44 +2068,58 @@ and third are symmetric</li>
     <span class="n">sigma_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span>
+            <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">P_errors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="n">dist_pdfs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">d_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span><span class="mf">15.</span><span class="p">,</span><span class="n">num</span><span class="o">=</span><span class="n">nd</span><span class="p">)</span>
-    <span class="n">d_width</span> <span class="o">=</span> <span class="n">d_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">d_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">d_cen</span> <span class="o">=</span> <span class="n">d_list</span> <span class="o">+</span> <span class="n">d_width</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">dist_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># d_list = np.linspace(0.,15.,num=nd)</span>
+    <span class="c1"># d_width = d_list[1] - d_list[0]</span>
+    <span class="c1"># d_cen = d_list + d_width/2</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-        <span class="n">d_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">d_cen</span> <span class="o">-</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_cen</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">d_cen</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">d_cen</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_cen</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">d_cen</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span>
+        <span class="c1"># print np.where(P[i]-3*sigma_P[i,0]&gt;0, P[i]+3*sigma_P[i,0], 0.001)</span>
+        <span class="c1"># d_list = np.linspace(np.where(P[i]-3*sigma_P[i,0]&gt;0, P[i]-3*sigma_P[i,0], 0.001),</span>
+        <span class="c1">#     1./(P[i]+3*sigma_P[i,1]), num=nd)</span>
+        <span class="n">d_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span> <span class="mf">15.</span><span class="p">),</span>
+            <span class="n">num</span><span class="o">=</span><span class="n">nd</span><span class="p">)</span>
 
-        <span class="n">A</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">d_hist</span><span class="o">*</span><span class="n">d_width</span><span class="p">)</span> <span class="c1"># Normalising factor</span>
-        <span class="n">dist_pdfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_hist</span><span class="o">/</span><span class="n">A</span><span class="p">)</span>
+
+        <span class="n">d_pdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">d_list</span> <span class="o">-</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_list</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">d_list</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">d_list</span> <span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">d_list</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_P</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">d_list</span><span class="o">**</span><span class="mf">2.</span><span class="p">))</span>
+
+        <span class="c1"># A = sum(d_hist*d_width) # Normalising factor</span>
+        <span class="n">d_pdf</span> <span class="o">/=</span> <span class="n">simps</span><span class="p">(</span><span class="n">d_pdf</span><span class="p">,</span> <span class="n">d_list</span><span class="p">)</span>
+        <span class="c1"># print name[i], d_list.min(), d_list.max(), d_pdf.max()</span>
+        <span class="n">dist_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_list</span><span class="p">)</span>
+        <span class="n">dist_pdfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_pdf</span><span class="p">)</span>
 
     <span class="n">dist_pdfs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">)</span>
-        
+    <span class="n">dist_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dist_list</span><span class="p">)</span>
+
+    <span class="c1"># print dist_pdfs.shape</span>
     <span class="k">if</span> <span class="n">save_files</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_parallax.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> 
-                <span class="nb">zip</span><span class="p">(</span><span class="n">d_cen</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-        
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_parallax.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+
     <span class="c1"># --&gt; make plots</span>
     <span class="k">if</span> <span class="n">plots</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">dist</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">_dist</span><span class="p">,</span> <span class="n">kde_func</span><span class="p">(</span><span class="n">_dist</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dist_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;D [kpc]&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s1">&#39;/plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
+            <span class="c1"># plt.savefig(dirname + &#39;/../plots/%s_parallax.pdf&#39;%(name[i]))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../plots/</span><span class="si">%s</span><span class="s1">_parallax.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">dist_pdfs</span><span class="p">,</span> <span class="n">dist</span>
+    <span class="k">return</span> <span class="n">dist_pdfs</span><span class="p">,</span> <span class="n">dist_list</span>
 </pre></div>
 
   </div>
@@ -1635,14 +2130,14 @@ and third are symmetric</li>
       
   <div class="item">
     <div class="name def" id="PSRdist.Distances.dist_pdf">
-    <p>def <span class="ident">dist_pdf</span>(</p><p>name, DM, l, b, mode=&#39;kde&#39;, MC_mode=&#39;bestfit&#39;, n_MC=1000, save_files=False, plots=False, nd=100, error=False)</p>
+    <p>def <span class="ident">dist_pdf</span>(</p><p>name, DM, l, b, mode=&#39;kde&#39;, nd=100, MC_mode=&#39;bestfit&#39;, n_MC=1000, save_files=False, plots=False, error=False, outdir=&#39;/Users/tedwards/Dropbox/PhD_Amsterdam/modules/PSRdist/PSRdist&#39;)</p>
     </div>
     
 
     
   
     <div class="desc"><p>Calcultes the distance to a source using the provided
-despersion measure. This function assumes the ymw16 model
+dispersion measure. This function assumes the ymw16 model
 for electron density distribution in the galaxy.</p>
 <p>The pdf is calculated by varying the parameters in the ymw16 model
 and recalculating the distance to the PSR which is the biggest source
@@ -1653,6 +2148,7 @@ of systematics in the distance calculation</p>
 <li>DM [array] : Dispersion measure # in pp/cm^3</li>
 <li>l [array] : longitude (galactic coordinates)</li>
 <li>b [array] : latitude (galactic coordinates)</li>
+<li>ndir : (1) DM to distance, (2) distance to DM</li>
 <li>n_MC [float] : number of monte carlo samples</li>
 <li>mode [str] : return PDF from kernel density estimator (kde) or
              as a hisgogram (hist).</li>
@@ -1672,14 +2168,13 @@ of systematics in the distance calculation</p>
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.dist_pdf', this);">Show source &equiv;</a></p>
   <div id="source-PSRdist.Distances.dist_pdf" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dist_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span> <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
     <span class="n">MC_mode</span> <span class="o">=</span> <span class="s2">&quot;bestfit&quot;</span><span class="p">,</span> <span class="n">n_MC</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">nd</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-    <span class="n">error</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">save_files</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="n">dirname</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    dispersion measure. This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy.</span>
 
 <span class="sd">    The pdf is calculated by varying the parameters in the ymw16 model</span>
@@ -1692,6 +2187,7 @@ of systematics in the distance calculation</p>
 <span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 <span class="sd">    * n_MC [float] : number of monte carlo samples</span>
 <span class="sd">    * mode [str] : return PDF from kernel density estimator (kde) or</span>
 <span class="sd">                 as a hisgogram (hist).</span>
@@ -1800,7 +2296,7 @@ of systematics in the distance calculation</p>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename_input</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Ele_arm </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="s1"> </span><span class="si">%.6f</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">val_narm_MC</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Wid_arm </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="s1"> </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">tuple</span><span class="p">(</span><span class="n">warm</span><span class="p">))</span>
-        <span class="n">D_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">))</span>
+        <span class="n">D_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
     <span class="n">D_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">D_list</span><span class="p">)</span>
 
 
@@ -1833,7 +2329,7 @@ of systematics in the distance calculation</p>
             <span class="n">pdf_peak</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">,:])]</span>
             <span class="n">one_sigma</span> <span class="o">=</span> <span class="n">so</span><span class="o">.</span><span class="n">brentq</span><span class="p">(</span><span class="n">confidence_interval</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">pdf_peak</span><span class="p">,</span> <span class="mf">0.68</span><span class="p">))</span>
             <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">pdf_peak</span><span class="p">,</span><span class="n">one_sigma</span><span class="p">])</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
 
     <span class="c1"># --&gt; make plots</span>
     <span class="k">if</span> <span class="n">plots</span><span class="p">:</span>
@@ -1843,7 +2339,7 @@ of systematics in the distance calculation</p>
                 <span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
 
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">D_list</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">nd</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">errors</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
@@ -1851,20 +2347,20 @@ of systematics in the distance calculation</p>
             <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;D [kpc]&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s1">&#39;/plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s1">&#39;/../plots/</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">.pdf&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">MC_mode</span><span class="p">))</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="c1"># --&gt; save files</span>
     <span class="k">if</span> <span class="n">save_files</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DM</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s2">&quot;kde&quot;</span><span class="p">:</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="nb">zip</span><span class="p">(</span><span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 
             <span class="k">elif</span> <span class="n">mode</span><span class="o">==</span><span class="s2">&quot;hist&quot;</span><span class="p">:</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_pdf_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="n">dist_pdfs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">workingdir</span> <span class="o">+</span> <span class="s2">&quot;/output/</span><span class="si">%s</span><span class="s2">_Dedges_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">_Dedges_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.dat&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mode</span><span class="p">,</span> <span class="n">MC_mode</span><span class="p">),</span>
                     <span class="n">dist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 
 
@@ -1881,15 +2377,100 @@ of systematics in the distance calculation</p>
   
       
   <div class="item">
-    <div class="name def" id="PSRdist.Distances.ymw16">
-    <p>def <span class="ident">ymw16</span>(</p><p>DM, l, b)</p>
+    <div class="name def" id="PSRdist.Distances.histedges_equalN">
+    <p>def <span class="ident">histedges_equalN</span>(</p><p>x, nbin)</p>
     </div>
     
 
     
   
-    <div class="desc"><p>Calcultes the distance to a source using the provided
-despersion measure. This function assumes the ymw16 model
+    <div class="desc"><p>Get histogram edges s.t. there are equal number or events in each bin
+From : https://stackoverflow.com/questions/39418380/histogram-with-equal-number-of-points-in-each-bin</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.histedges_equalN', this);">Show source &equiv;</a></p>
+  <div id="source-PSRdist.Distances.histedges_equalN" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">histedges_equalN</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">nbin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get histogram edges s.t. there are equal number or events in each bin</span>
+<span class="sd">    From : https://stackoverflow.com/questions/39418380/histogram-with-equal-number-of-points-in-each-bin</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">npt</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">npt</span><span class="p">,</span> <span class="n">nbin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npt</span><span class="p">),</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="PSRdist.Distances.px_pdf">
+    <p>def <span class="ident">px_pdf</span>(</p><p>name, px, dist, sigma_px)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><h2>Arguments</h2>
+<ul>
+<li>name [array] : List of names of sources for labelling</li>
+<li>px [float] : observed parallax [mas]</li>
+<li>dist [array] : True distance to a source [kpc]</li>
+<li>sigma_px [array] : Error on parallax [mas]</li>
+</ul>
+<h2>Returns</h2>
+<ul>
+<li>px_pdf [array] : PDFs of the measured parallax to PSRs given a true distance Dt (not correctly normalized!)</li>
+<li>dist [array] : distances for each pdf point (if kde) or
+               bin edges (if hist) # [kpc]</li>
+</ul></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.px_pdf', this);">Show source &equiv;</a></p>
+  <div id="source-PSRdist.Distances.px_pdf" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">px_pdf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">sigma_px</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    * name [array] : List of names of sources for labelling</span>
+<span class="sd">    * px [float] : observed parallax [mas]</span>
+<span class="sd">    * dist [array] : True distance to a source [kpc]</span>
+<span class="sd">    * sigma_px [array] : Error on parallax [mas]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    * px_pdf [array] : PDFs of the measured parallax to PSRs given a true distance Dt (not correctly normalized!)</span>
+<span class="sd">    * dist [array] : distances for each pdf point (if kde) or</span>
+<span class="sd">                   bin edges (if hist) # [kpc]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check for symmetric or asymmetric</span>
+
+    <span class="n">px_pdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">px</span> <span class="o">-</span> <span class="mf">1.</span><span class="o">/</span><span class="n">dist</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">px</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">dist</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_px</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">dist</span> <span class="o">-</span> <span class="n">px</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(((</span><span class="n">px</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">dist</span><span class="p">)</span><span class="o">/</span><span class="n">sigma_px</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">))</span> <span class="c1"># P(w_meas|w(D))</span>
+
+    <span class="k">return</span> <span class="n">px_pdf</span><span class="p">,</span> <span class="n">dist</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="PSRdist.Distances.ymw16">
+    <p>def <span class="ident">ymw16</span>(</p><p>DM, l, b, ndir=1, best_fit=False)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Calcultes the distance (DM) to a source using the provided
+dispersion measure (distance). This function assumes the ymw16 model
 for electron density distribution in the galaxy.</p>
 <p>Requires an installed version of the ymw16 model in the local
 directory.</p>
@@ -1897,9 +2478,10 @@ directory.</p>
 variation in distance calculated from the neighbouring pixels.</p>
 <h2>Arguments</h2>
 <ul>
-<li>DM [array] : Dispersion measure # in pp/cm^3</li>
+<li>DM [array] : Dispersion measure [pp/cm^3] or Distance [kpc]</li>
 <li>l [array] : longitude (galactic coordinates)</li>
 <li>b [array] : latitude (galactic coordinates)</li>
+<li>ndir : (1) DM to distance, (2) distance to DM</li>
 </ul>
 <h2>Returns</h2>
 <ul>
@@ -1908,10 +2490,10 @@ variation in distance calculated from the neighbouring pixels.</p>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-PSRdist.Distances.ymw16', this);">Show source &equiv;</a></p>
   <div id="source-PSRdist.Distances.ymw16" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">ymw16</span><span class="p">(</span><span class="n">DM</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">best_fit</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Calcultes the distance to a source using the provided</span>
-<span class="sd">    despersion measure. This function assumes the ymw16 model</span>
+<span class="sd">    Calcultes the distance (DM) to a source using the provided</span>
+<span class="sd">    dispersion measure (distance). This function assumes the ymw16 model</span>
 <span class="sd">    for electron density distribution in the galaxy.</span>
 
 <span class="sd">    Requires an installed version of the ymw16 model in the local</span>
@@ -1922,15 +2504,20 @@ variation in distance calculated from the neighbouring pixels.</p>
 
 <span class="sd">    Arguments</span>
 <span class="sd">    ---------</span>
-<span class="sd">    * DM [array] : Dispersion measure # in pp/cm^3</span>
+<span class="sd">    * DM [array] : Dispersion measure [pp/cm^3] or Distance [kpc]</span>
 <span class="sd">    * l [array] : longitude (galactic coordinates)</span>
 <span class="sd">    * b [array] : latitude (galactic coordinates)</span>
+<span class="sd">    * ndir : (1) DM to distance, (2) distance to DM</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    * Dist [array] : Distance to PSR # in kpc</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Dist</span> <span class="o">=</span> <span class="n">ymw</span><span class="o">.</span><span class="n">distances</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">dirname</span><span class="o">=</span><span class="n">dirname</span><span class="o">+</span><span class="s2">&quot;/ymw16_v1.3/&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_fit</span><span class="p">:</span>
+        <span class="c1"># reset to best fit value</span>
+        <span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/ymw16_v1.3/ymw16par_bestfit.txt&quot;</span><span class="o">%</span><span class="n">dirname</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/ymw16_v1.3/ymw16par.txt&quot;</span><span class="o">%</span><span class="n">dirname</span><span class="p">)</span>
+
+    <span class="n">Dist</span> <span class="o">=</span> <span class="n">ymw</span><span class="o">.</span><span class="n">distances</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">DM</span><span class="o">=</span><span class="n">DM</span><span class="p">,</span> <span class="n">dirname</span><span class="o">=</span><span class="n">dirname</span><span class="o">+</span><span class="s2">&quot;/ymw16_v1.3/&quot;</span><span class="p">,</span> <span class="n">ndir</span><span class="o">=</span><span class="n">ndir</span><span class="p">)</span>
     <span class="c1"># Dist = ymw.distances(l=l, b=b, DM=DM)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Dist</span><span class="p">)</span>
 </pre></div>
