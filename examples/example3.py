@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import simps
-from MSPDist import Distances as D
+from PSRDist import Distances as D
 
 import matplotlib
 import matplotlib.pyplot as plt

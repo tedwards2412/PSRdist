@@ -1,6 +1,7 @@
 # PSRDist
-Calculates probability density functions for the distances to Millisecond Pulsars.
-Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448). It has been adopted to scan over the parameters of the electron density model.
+Calculates a variety of properties relating to the distances to Pulsars.
+Code consists of a wrapper for the ymw16 electron density model (Yao, Manchester and Wang, 2017, Astrophys. J., 835, 29; arXiv:1610.09448).
+It has been adopted to scan over the parameters of the electron density model.
 The documentaiton can be found [here](https://tedwards2412.github.io/PSRdist/).
 If you use this package for research purposes please include a reference to the original ymw16 paper as well as Bartels, Edwards & Weniger (in prep). 
 
@@ -8,9 +9,31 @@ If you use this package for research purposes please include a reference to the 
 - numpy
 - cython
 
-Compile the cython code by running ./make.sh. Then py_ymw16 can be imported by python.
-Currently there is an issue with reading and writing to files in installation directories
-For now simply add MSPDist directory to your PYTHONPATH
+Compile the cython code by running ./make.sh.
+
+```
+./make.sh
+```
+
+Currently working on getting it pip installable.
+For now simply add the module location to your PYTHONPATH by adding 
+
+```
+PYTHONPATH="/PATH/TO/MODULE/PSRdist:$PYTHONPATH"
+```
+
+to your bash_profile or bashrc scripts. The module should then be imported easily as a wrapper:
+
+```
+import py_ymw16 as ymw
+```
+or with the use of the additional MC functions:
+
+```
+from PSRDist import Distances as D
+```
+
+Examples on how to use the code are provided and found [here](https://github.com/tedwards2412/PSRdist/tree/master/examples).
 
 ## Errors
 We assume the ymw16 model for the electron density distribution of our galaxy
