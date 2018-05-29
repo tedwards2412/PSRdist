@@ -345,7 +345,7 @@ def DM_pdf(name,
     -------
     * P(DM|D) [array] : 2-D Histogram where $\int dDM P(DM|D) = 1$
     * dist_edges [array] : bin edges # [kpc]
-    * DM_edges [array] : bin edges # [pc]
+    * DM_edges [array] : bin edges # [pp/cm^3]
     """
     mode = "hist"
     # Set up distance: we draw distance assuming a lognormal around the best-fit
